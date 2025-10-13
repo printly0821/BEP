@@ -12,6 +12,15 @@ echo -e "${BLUE}  Git Commit & Push Script${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
+# 변경사항 확인
+if [[ -z $(git status -s) ]]; then
+    echo -e "${GREEN}✓ Working tree clean - 커밋할 변경사항이 없습니다.${NC}"
+    echo ""
+    echo -e "${BLUE}최근 커밋:${NC}"
+    git log --oneline -3
+    exit 0
+fi
+
 # 1. Git 상태 확인
 echo -e "${YELLOW}[1/6] Git 상태 확인 중...${NC}"
 git status
@@ -35,8 +44,12 @@ git add src/types/job-order.ts \
 echo -e "${GREEN}✓ 메인 파일 staged${NC}"
 
 # 5. 첫 번째 커밋 (페이지 번호 개선)
-echo -e "${YELLOW}[5/6] 첫 번째 커밋 생성 중...${NC}"
-git commit -m "$(cat <<'EOF'
+# staged된 파일이 있는지 확인
+if [[ -z $(git diff --cached --name-only) ]]; then
+    echo -e "${YELLOW}[5/6] 커밋할 변경사항 없음 - 건너뜀${NC}"
+else
+    echo -e "${YELLOW}[5/6] 첫 번째 커밋 생성 중...${NC}"
+    git commit -m "$(cat <<'EOF'
 fix(report): 책자 페이지 번호 체계 개선 및 전체 페이지 이미지 생성
 
 - pageType 필드 추가 (cover_front, inside, cover_back)
@@ -54,11 +67,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ 첫 번째 커밋 성공${NC}"
-else
-    echo -e "${RED}✗ 커밋 실패${NC}"
-    exit 1
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ 첫 번째 커밋 성공${NC}"
+    else
+        echo -e "${RED}✗ 커밋 실패${NC}"
+        exit 1
+    fi
 fi
 echo ""
 
@@ -83,8 +97,12 @@ echo -e "${GREEN}✓ 문서 및 시스템 파일 staged${NC}"
 echo ""
 
 # 두 번째 커밋 (문서 추가)
-echo -e "${YELLOW}[추가] 두 번째 커밋 생성 중...${NC}"
-git commit -m "$(cat <<'EOF'
+# staged된 파일이 있는지 확인
+if [[ -z $(git diff --cached --name-only) ]]; then
+    echo -e "${YELLOW}[추가] 커밋할 변경사항 없음 - 건너뜀${NC}"
+else
+    echo -e "${YELLOW}[추가] 두 번째 커밋 생성 중...${NC}"
+    git commit -m "$(cat <<'EOF'
 docs: 카테고리 분석 문서 및 매핑 시스템 추가
 
 - 레드프린팅 카테고리 구조 분석 문서 추가
@@ -102,28 +120,37 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ 두 번째 커밋 성공${NC}"
-else
-    echo -e "${RED}✗ 커밋 실패${NC}"
-    exit 1
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ 두 번째 커밋 성공${NC}"
+    else
+        echo -e "${RED}✗ 커밋 실패${NC}"
+        exit 1
+    fi
 fi
 echo ""
 
 # 6. Push to remote
-echo -e "${YELLOW}[6/6] 원격 저장소에 push 중...${NC}"
-git push origin main
-
-if [ $? -eq 0 ]; then
-    echo ""
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}  ✓ 모든 작업 완료!${NC}"
-    echo -e "${GREEN}========================================${NC}"
-    echo ""
-    echo -e "${BLUE}최근 커밋:${NC}"
-    git log --oneline -3
-    echo ""
+# 푸시할 커밋이 있는지 확인
+COMMITS_TO_PUSH=$(git rev-list @{u}..HEAD 2>/dev/null | wc -l)
+if [ "$COMMITS_TO_PUSH" -eq 0 ]; then
+    echo -e "${YELLOW}[6/6] Push할 커밋 없음 - 이미 최신 상태입니다.${NC}"
 else
-    echo -e "${RED}✗ Push 실패${NC}"
-    exit 1
+    echo -e "${YELLOW}[6/6] 원격 저장소에 push 중... ($COMMITS_TO_PUSH개 커밋)${NC}"
+    git push origin main
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Push 성공${NC}"
+    else
+        echo -e "${RED}✗ Push 실패${NC}"
+        exit 1
+    fi
 fi
+
+echo ""
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}  ✓ 모든 작업 완료!${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo ""
+echo -e "${BLUE}최근 커밋:${NC}"
+git log --oneline -3
+echo ""
