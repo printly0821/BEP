@@ -26,6 +26,7 @@ export interface ProductImage {
   url: string;
   side?: "front" | "back"; // 단면/양면 제품용
   pageNumber?: number; // 다중 페이지 제품용 (1부터 시작)
+  pageType?: "cover_front" | "inside" | "cover_back"; // 책자 페이지 유형 (표지/속지/뒷표지)
   description?: string; // 이미지 설명
   width?: number; // 이미지 너비 (픽셀)
   height?: number; // 이미지 높이 (픽셀)
