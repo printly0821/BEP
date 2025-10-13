@@ -10,7 +10,9 @@ import { SimulationPanel } from "./components/SimulationPanel";
 import { ActionButtons } from "./components/ActionButtons";
 import { SaveProjectDialog } from "./components/SaveProjectDialog";
 import { DebugPanel } from "./components/DebugPanel";
+import { ReportView } from "./components/ReportView";
 import { useToast } from "@/hooks/use-toast";
+import { generatePDF } from "@/lib/pdf-generator";
 import type { CalculationState } from "@/features/projects/types";
 
 interface CalculationResult {
@@ -36,6 +38,9 @@ export default function CalculatorPage() {
 
   // 저장 다이얼로그 상태
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
+  // PDF 다운로드 로딩 상태
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // 계산 결과 상태
   const [calculationResult, setCalculationResult] = useState<CalculationResult>({
@@ -177,6 +182,39 @@ export default function CalculatorPage() {
     setSaveDialogOpen(true);
   };
 
+  // PDF 다운로드 핸들러
+  const handleDownloadPdf = async () => {
+    if (calculationResult.breakEvenQuantity === 0) {
+      toast({
+        title: "다운로드 불가",
+        description: "먼저 계산을 완료해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+
+    try {
+      // PDF 생성 및 다운로드
+      await generatePDF("pdf-report-view");
+
+      toast({
+        title: "다운로드 완료",
+        description: "PDF 리포트가 성공적으로 다운로드되었습니다.",
+      });
+    } catch (error) {
+      console.error("PDF 다운로드 오류:", error);
+      toast({
+        title: "다운로드 실패",
+        description: "PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -220,7 +258,11 @@ export default function CalculatorPage() {
                 onApply={handleApplySimulation}
                 onReset={handleResetSimulation}
               />
-              <ActionButtons onSave={handleSave} />
+              <ActionButtons
+                onSave={handleSave}
+                onDownloadPdf={handleDownloadPdf}
+                isDownloadingPdf={isDownloadingPdf}
+              />
             </div>
 
             {/* 오른쪽 열: 결과 대시보드, 그래프 */}
@@ -259,6 +301,38 @@ export default function CalculatorPage() {
         onOpenChange={setSaveDialogOpen}
         calculationState={calculationState}
       />
+
+      {/* PDF 생성용 숨겨진 ReportView (화면에 표시되지 않음) */}
+      <div
+        style={{
+          position: "fixed",
+          left: "-9999px",
+          top: "0",
+          backgroundColor: "#ffffff",
+          color: "#000000",
+        }}
+      >
+        <div
+          id="pdf-report-view"
+          style={{
+            width: "210mm",
+            backgroundColor: "#ffffff",
+            color: "#000000",
+            fontFamily: "'Noto Sans KR', sans-serif",
+          }}
+        >
+          <ReportView
+            breakEvenQuantity={calculationResult.breakEvenQuantity}
+            targetQuantity={calculationResult.targetQuantity}
+            expectedRevenue={calculationResult.projectedRevenue}
+            expectedProfit={calculationResult.projectedProfit}
+            sellingPrice={Number(sellingPrice) || 0}
+            variableCost={Number(variableCost) || 0}
+            fixedCost={Number(fixedCost) || 0}
+            targetProfit={Number(targetProfit) || 0}
+          />
+        </div>
+      </div>
     </div>
   );
 }
