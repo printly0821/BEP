@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { useProjectQuery } from '@/features/projects/hooks/useProjectQuery';
 import { useLoadProject } from '@/features/projects/hooks/useLoadProject';
@@ -34,6 +35,7 @@ export function ProjectDetailSheet({
   onOpenChange,
 }: ProjectDetailSheetProps) {
   const router = useRouter();
+  const t = useTranslations('projects');
   const { toast } = useToast();
   const { data: project, isLoading, error } = useProjectQuery(projectId);
   const { mutate: loadProject, isPending: isLoadingProject } = useLoadProject();
@@ -44,14 +46,14 @@ export function ProjectDetailSheet({
     loadProject(projectId, {
       onSuccess: () => {
         toast({
-          title: '불러오기 완료',
-          description: `프로젝트 "${project.name}"의 데이터를 계산기에 불러왔습니다.`,
+          title: t('toast.loadSuccess'),
+          description: t('toast.loadSuccessDesc', { name: project.name }),
         });
         router.push('/calculator');
       },
       onError: (error) => {
         toast({
-          title: '불러오기 실패',
+          title: t('toast.loadFailed'),
           description: error.message,
           variant: 'destructive',
         });
@@ -63,9 +65,9 @@ export function ProjectDetailSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="mb-6">
-          <SheetTitle className="text-heading-2">프로젝트 상세</SheetTitle>
+          <SheetTitle className="text-heading-2">{t('detail.title')}</SheetTitle>
           <SheetDescription>
-            저장된 BEP 계산 프로젝트의 상세 정보입니다.
+            {t('detail.description')}
           </SheetDescription>
         </SheetHeader>
 
@@ -79,7 +81,7 @@ export function ProjectDetailSheet({
           <Card className="border-destructive">
             <CardContent className="p-6">
               <p className="text-body text-destructive">
-                프로젝트를 불러오는 중 오류가 발생했습니다.
+                {t('error.detailLoadFailed')}
               </p>
               <p className="text-body-small text-muted-foreground mt-2">
                 {error.message}
@@ -93,12 +95,12 @@ export function ProjectDetailSheet({
             {/* 프로젝트 기본 정보 */}
             <Card className="rounded-card shadow-card">
               <CardHeader>
-                <CardTitle className="text-heading-3">기본 정보</CardTitle>
+                <CardTitle className="text-heading-3">{t('detail.basicInfo.title')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-caption text-muted-foreground mb-1">
-                    프로젝트명
+                    {t('detail.basicInfo.projectName')}
                   </p>
                   <p className="text-body font-medium">{project.name}</p>
                 </div>
@@ -106,7 +108,7 @@ export function ProjectDetailSheet({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      생성일
+                      {t('detail.basicInfo.createdAt')}
                     </p>
                     <p className="text-body-small">
                       {new Date(project.created_at).toLocaleDateString('ko-KR', {
@@ -118,7 +120,7 @@ export function ProjectDetailSheet({
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      수정일
+                      {t('detail.basicInfo.updatedAt')}
                     </p>
                     <p className="text-body-small">
                       {new Date(project.updated_at).toLocaleDateString('ko-KR', {
@@ -133,13 +135,13 @@ export function ProjectDetailSheet({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      버전
+                      {t('detail.basicInfo.version')}
                     </p>
                     <p className="text-body-small">{project.version}</p>
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      로케일
+                      {t('detail.basicInfo.locale')}
                     </p>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-caption font-medium bg-accent/10 text-accent">
                       {project.locale.toUpperCase()}
@@ -152,42 +154,42 @@ export function ProjectDetailSheet({
             {/* 계산 입력값 */}
             <Card className="rounded-card shadow-card">
               <CardHeader>
-                <CardTitle className="text-heading-3">입력값</CardTitle>
+                <CardTitle className="text-heading-3">{t('detail.inputs.title')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      판매 단가
+                      {t('detail.inputs.price')}
                     </p>
                     <p className="text-body font-medium">
-                      {project.input_json.price.toLocaleString()}원
+                      {project.input_json.price.toLocaleString()}{t('units.won')}
                     </p>
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      단위당 변동비
+                      {t('detail.inputs.unitCost')}
                     </p>
                     <p className="text-body font-medium">
-                      {project.input_json.unitCost.toLocaleString()}원
+                      {project.input_json.unitCost.toLocaleString()}{t('units.won')}
                     </p>
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      고정비
+                      {t('detail.inputs.fixedCost')}
                     </p>
                     <p className="text-body font-medium">
-                      {project.input_json.fixedCost.toLocaleString()}원
+                      {project.input_json.fixedCost.toLocaleString()}{t('units.won')}
                     </p>
                   </div>
                   {project.input_json.targetProfit !== undefined &&
                     project.input_json.targetProfit > 0 && (
                       <div>
                         <p className="text-caption text-muted-foreground mb-1">
-                          목표 수익
+                          {t('detail.inputs.targetProfit')}
                         </p>
                         <p className="text-body font-medium">
-                          {project.input_json.targetProfit.toLocaleString()}원
+                          {project.input_json.targetProfit.toLocaleString()}{t('units.won')}
                         </p>
                       </div>
                     )}
@@ -198,42 +200,42 @@ export function ProjectDetailSheet({
             {/* 계산 결과 */}
             <Card className="rounded-card shadow-card">
               <CardHeader>
-                <CardTitle className="text-heading-3">계산 결과</CardTitle>
+                <CardTitle className="text-heading-3">{t('detail.results.title')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      손익분기점 판매량
+                      {t('detail.results.bepQuantity')}
                     </p>
                     <p className="text-body font-semibold text-accent">
-                      {project.result_json.bepQuantity.toLocaleString()}개
+                      {project.result_json.bepQuantity.toLocaleString()}{t('units.quantity')}
                     </p>
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      손익분기점 매출액
+                      {t('detail.results.bepRevenue')}
                     </p>
                     <p className="text-body font-semibold text-accent">
-                      {project.result_json.bepRevenue.toLocaleString()}원
+                      {project.result_json.bepRevenue.toLocaleString()}{t('units.won')}
                     </p>
                   </div>
                   <div>
                     <p className="text-caption text-muted-foreground mb-1">
-                      공헌이익률
+                      {t('detail.results.marginRate')}
                     </p>
                     <p className="text-body font-medium">
-                      {(project.result_json.marginRate * 100).toFixed(1)}%
+                      {(project.result_json.marginRate * 100).toFixed(1)}{t('units.percent')}
                     </p>
                   </div>
                   {project.result_json.targetQuantity !== undefined &&
                     project.result_json.targetQuantity > 0 && (
                       <div>
                         <p className="text-caption text-muted-foreground mb-1">
-                          목표 달성 판매량
+                          {t('detail.results.targetQuantity')}
                         </p>
                         <p className="text-body font-medium">
-                          {project.result_json.targetQuantity.toLocaleString()}개
+                          {project.result_json.targetQuantity.toLocaleString()}{t('units.quantity')}
                         </p>
                       </div>
                     )}
@@ -245,11 +247,11 @@ export function ProjectDetailSheet({
             {project.sensitivity_json && project.sensitivity_json.length > 0 && (
               <Card className="rounded-card shadow-card">
                 <CardHeader>
-                  <CardTitle className="text-heading-3">민감도 분석</CardTitle>
+                  <CardTitle className="text-heading-3">{t('detail.sensitivity.title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-body-small text-muted-foreground">
-                    {project.sensitivity_json.length}개의 데이터 포인트
+                    {project.sensitivity_json.length}{t('detail.sensitivity.dataPoints')}
                   </div>
                 </CardContent>
               </Card>
@@ -267,16 +269,16 @@ export function ProjectDetailSheet({
                 ) : (
                   <Calculator className="mr-2 h-4 w-4" />
                 )}
-                계산기로 불러오기
+                {t('actions.loadToCalculator')}
               </Button>
               <Button
                 variant="outline"
                 disabled
-                title="Export 기능 (개발 예정)"
+                title={t('actions.exportTooltip')}
                 className="transition-button"
               >
                 <Download className="mr-2 h-4 w-4" />
-                내보내기
+                {t('actions.exportData')}
               </Button>
             </div>
           </div>

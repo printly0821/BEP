@@ -1,0 +1,122 @@
+{
+  "projects": {
+    "page": {
+      "title": "내 프로젝트",
+      "description": "저장된 BEP 계산 프로젝트를 관리하고 불러올 수 있습니다."
+    },
+    "actions": {
+      "newProject": "새 프로젝트",
+      "import": "엑셀 Import",
+      "importShort": "Import",
+      "export": "Export",
+      "exportShort": "내보내기",
+      "importTooltip": "엑셀 Import 기능 (개발 예정)",
+      "exportTooltip": "Export 기능 (개발 예정)",
+      "loadToCalculator": "계산기로 불러오기",
+      "exportData": "내보내기"
+    },
+    "table": {
+      "projectName": "프로젝트명",
+      "createdAt": "생성일",
+      "updatedAt": "수정일",
+      "locale": "로케일",
+      "action": "액션",
+      "openMenu": "메뉴 열기"
+    },
+    "menu": {
+      "view": "상세 보기",
+      "rename": "이름 변경",
+      "delete": "삭제"
+    },
+    "create": {
+      "title": "새 프로젝트 생성",
+      "description": "새로운 BEP 계산 프로젝트를 생성합니다.",
+      "nameLabel": "프로젝트명",
+      "namePlaceholder": "예: 카페 창업 BEP 분석",
+      "hint": "💡 프로젝트를 생성한 후 계산기에서 데이터를 입력하고 저장할 수 있습니다.",
+      "cancel": "취소",
+      "submit": "생성",
+      "submitting": "생성 중..."
+    },
+    "rename": {
+      "title": "프로젝트 이름 변경",
+      "description": "프로젝트의 새로운 이름을 입력하세요.",
+      "nameLabel": "프로젝트명",
+      "cancel": "취소",
+      "submit": "변경",
+      "submitting": "변경 중..."
+    },
+    "delete": {
+      "title": "프로젝트 삭제",
+      "description": "정말로 이 프로젝트를 삭제하시겠습니까?",
+      "projectName": "프로젝트명:",
+      "warning": "삭제된 프로젝트는 복구할 수 없습니다.",
+      "cancel": "취소",
+      "submit": "삭제",
+      "submitting": "삭제 중..."
+    },
+    "detail": {
+      "title": "프로젝트 상세",
+      "description": "저장된 BEP 계산 프로젝트의 상세 정보입니다.",
+      "basicInfo": {
+        "title": "기본 정보",
+        "projectName": "프로젝트명",
+        "createdAt": "생성일",
+        "updatedAt": "수정일",
+        "version": "버전",
+        "locale": "로케일"
+      },
+      "inputs": {
+        "title": "입력값",
+        "price": "판매 단가",
+        "unitCost": "단위당 변동비",
+        "fixedCost": "고정비",
+        "targetProfit": "목표 수익"
+      },
+      "results": {
+        "title": "계산 결과",
+        "bepQuantity": "손익분기점 판매량",
+        "bepRevenue": "손익분기점 매출액",
+        "marginRate": "공헌이익률",
+        "targetQuantity": "목표 달성 판매량"
+      },
+      "sensitivity": {
+        "title": "민감도 분석",
+        "dataPoints": "개의 데이터 포인트"
+      }
+    },
+    "empty": {
+      "title": "저장된 프로젝트가 없습니다",
+      "description": "첫 번째 프로젝트를 생성하여 BEP 계산 결과를 저장해보세요."
+    },
+    "loading": "프로젝트 목록을 불러오는 중...",
+    "error": {
+      "loadFailed": "프로젝트 목록을 불러오는 중 오류가 발생했습니다.",
+      "detailLoadFailed": "프로젝트를 불러오는 중 오류가 발생했습니다."
+    },
+    "toast": {
+      "loginRequired": "로그인 필요",
+      "loginRequiredDesc": "프로젝트를 생성하려면 먼저 로그인해주세요.",
+      "inputError": "입력 오류",
+      "nameRequired": "프로젝트명을 입력해주세요.",
+      "createSuccess": "생성 완료",
+      "createSuccessDesc": "프로젝트 \"{name}\"이(가) 성공적으로 생성되었습니다.",
+      "createFailed": "생성 실패",
+      "createFailedDesc": "프로젝트 생성 중 오류가 발생했습니다.",
+      "renameSuccess": "변경 완료",
+      "renameSuccessDesc": "프로젝트명이 \"{name}\"로 변경되었습니다.",
+      "renameFailed": "변경 실패",
+      "deleteSuccess": "삭제 완료",
+      "deleteSuccessDesc": "프로젝트 \"{name}\"이(가) 삭제되었습니다.",
+      "deleteFailed": "삭제 실패",
+      "loadSuccess": "불러오기 완료",
+      "loadSuccessDesc": "프로젝트 \"{name}\"의 데이터를 계산기에 불러왔습니다.",
+      "loadFailed": "불러오기 실패"
+    },
+    "units": {
+      "won": "원",
+      "quantity": "개",
+      "percent": "%"
+    }
+  }
+}

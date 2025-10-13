@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { useUpdateProject } from '@/features/projects/hooks/useUpdateProject';
 import { useDeleteProject } from '@/features/projects/hooks/useDeleteProject';
@@ -46,6 +47,7 @@ export function ProjectRowActions({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newName, setNewName] = useState(project.name);
 
+  const t = useTranslations('projects');
   const { toast } = useToast();
   const { mutate: updateProject, isPending: isUpdating } = useUpdateProject();
   const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
@@ -53,8 +55,8 @@ export function ProjectRowActions({
   const handleRename = () => {
     if (!newName.trim()) {
       toast({
-        title: '입력 오류',
-        description: '프로젝트명을 입력해주세요.',
+        title: t('toast.inputError'),
+        description: t('toast.nameRequired'),
         variant: 'destructive',
       });
       return;
@@ -68,14 +70,14 @@ export function ProjectRowActions({
       {
         onSuccess: () => {
           toast({
-            title: '변경 완료',
-            description: `프로젝트명이 "${newName}"로 변경되었습니다.`,
+            title: t('toast.renameSuccess'),
+            description: t('toast.renameSuccessDesc', { name: newName }),
           });
           setIsRenameDialogOpen(false);
         },
         onError: (error) => {
           toast({
-            title: '변경 실패',
+            title: t('toast.renameFailed'),
             description: error.message,
             variant: 'destructive',
           });
@@ -88,14 +90,14 @@ export function ProjectRowActions({
     deleteProject(project.id, {
       onSuccess: () => {
         toast({
-          title: '삭제 완료',
-          description: `프로젝트 "${project.name}"이(가) 삭제되었습니다.`,
+          title: t('toast.deleteSuccess'),
+          description: t('toast.deleteSuccessDesc', { name: project.name }),
         });
         setIsDeleteDialogOpen(false);
       },
       onError: (error) => {
         toast({
-          title: '삭제 실패',
+          title: t('toast.deleteFailed'),
           description: error.message,
           variant: 'destructive',
         });
@@ -109,7 +111,7 @@ export function ProjectRowActions({
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <MoreVertical className="h-4 w-4" />
-            <span className="sr-only">메뉴 열기</span>
+            <span className="sr-only">{t('table.openMenu')}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
@@ -120,7 +122,7 @@ export function ProjectRowActions({
             }}
           >
             <Eye className="mr-2 h-4 w-4" />
-            상세 보기
+            {t('menu.view')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={(e) => {
@@ -129,7 +131,7 @@ export function ProjectRowActions({
             }}
           >
             <Pencil className="mr-2 h-4 w-4" />
-            이름 변경
+            {t('menu.rename')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -140,7 +142,7 @@ export function ProjectRowActions({
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            삭제
+            {t('menu.delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -149,14 +151,14 @@ export function ProjectRowActions({
       <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
         <DialogContent className="sm:max-w-[425px] rounded-modal">
           <DialogHeader>
-            <DialogTitle>프로젝트 이름 변경</DialogTitle>
+            <DialogTitle>{t('rename.title')}</DialogTitle>
             <DialogDescription>
-              프로젝트의 새로운 이름을 입력하세요.
+              {t('rename.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="project-name">프로젝트명</Label>
+              <Label htmlFor="project-name">{t('rename.nameLabel')}</Label>
               <Input
                 id="project-name"
                 value={newName}
@@ -177,10 +179,10 @@ export function ProjectRowActions({
               onClick={() => setIsRenameDialogOpen(false)}
               disabled={isUpdating}
             >
-              취소
+              {t('rename.cancel')}
             </Button>
             <Button onClick={handleRename} disabled={isUpdating || !newName.trim()}>
-              {isUpdating ? '변경 중...' : '변경'}
+              {isUpdating ? t('rename.submitting') : t('rename.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -190,18 +192,18 @@ export function ProjectRowActions({
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px] rounded-modal">
           <DialogHeader>
-            <DialogTitle>프로젝트 삭제</DialogTitle>
+            <DialogTitle>{t('delete.title')}</DialogTitle>
             <DialogDescription>
-              정말로 이 프로젝트를 삭제하시겠습니까?
+              {t('delete.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
               <p className="text-body-small text-foreground mb-2">
-                <strong>프로젝트명:</strong> {project.name}
+                <strong>{t('delete.projectName')}</strong> {project.name}
               </p>
               <p className="text-caption text-muted-foreground">
-                삭제된 프로젝트는 복구할 수 없습니다.
+                {t('delete.warning')}
               </p>
             </div>
           </div>
@@ -211,14 +213,14 @@ export function ProjectRowActions({
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
-              취소
+              {t('delete.cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? '삭제 중...' : '삭제'}
+              {isDeleting ? t('delete.submitting') : t('delete.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

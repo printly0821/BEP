@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, FolderOpen } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { ProjectRowActions } from './ProjectRowActions';
 import type { ProjectListItem } from '@/features/projects/lib/dto';
 
@@ -27,6 +28,7 @@ export function ProjectsTable({
   error,
   onProjectSelect,
 }: ProjectsTableProps) {
+  const t = useTranslations('projects');
   // 로딩 상태
   if (isLoading) {
     return (
@@ -52,7 +54,7 @@ export function ProjectsTable({
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-body text-destructive font-medium mb-2">
-              프로젝트 목록을 불러오는 중 오류가 발생했습니다.
+              {t('error.loadFailed')}
             </p>
             <p className="text-body-small text-muted-foreground">
               {error.message}
@@ -75,10 +77,10 @@ export function ProjectsTable({
               </div>
             </div>
             <h3 className="text-heading-3 font-semibold mb-2">
-              저장된 프로젝트가 없습니다
+              {t('empty.title')}
             </h3>
             <p className="text-body text-muted-foreground mb-6">
-              첫 번째 프로젝트를 생성하여 BEP 계산 결과를 저장해보세요.
+              {t('empty.description')}
             </p>
           </div>
         </CardContent>
@@ -91,11 +93,11 @@ export function ProjectsTable({
     <div className="space-y-4">
       {/* 데스크톱: 테이블 헤더 */}
       <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-body-small font-medium text-muted-foreground">
-        <div className="col-span-5">프로젝트명</div>
-        <div className="col-span-2">생성일</div>
-        <div className="col-span-2">수정일</div>
-        <div className="col-span-2">로케일</div>
-        <div className="col-span-1 text-right">액션</div>
+        <div className="col-span-5">{t('table.projectName')}</div>
+        <div className="col-span-2">{t('table.createdAt')}</div>
+        <div className="col-span-2">{t('table.updatedAt')}</div>
+        <div className="col-span-2">{t('table.locale')}</div>
+        <div className="col-span-1 text-right">{t('table.action')}</div>
       </div>
 
       {/* 프로젝트 목록 */}
@@ -120,7 +122,7 @@ export function ProjectsTable({
               {/* 생성일 */}
               <div className="col-span-1 md:col-span-2">
                 <div className="md:hidden text-caption text-muted-foreground mb-1">
-                  생성일
+                  {t('table.createdAt')}
                 </div>
                 <p className="text-body-small text-foreground">
                   {new Date(project.created_at).toLocaleDateString('ko-KR', {
@@ -134,7 +136,7 @@ export function ProjectsTable({
               {/* 수정일 */}
               <div className="col-span-1 md:col-span-2">
                 <div className="md:hidden text-caption text-muted-foreground mb-1">
-                  수정일
+                  {t('table.updatedAt')}
                 </div>
                 <p className="text-body-small text-foreground">
                   {new Date(project.updated_at).toLocaleDateString('ko-KR', {
@@ -148,7 +150,7 @@ export function ProjectsTable({
               {/* 로케일 */}
               <div className="col-span-1 md:col-span-2">
                 <div className="md:hidden text-caption text-muted-foreground mb-1">
-                  로케일
+                  {t('table.locale')}
                 </div>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium bg-accent/10 text-accent">
                   {project.locale.toUpperCase()}

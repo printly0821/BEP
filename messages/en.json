@@ -1,0 +1,122 @@
+{
+  "projects": {
+    "page": {
+      "title": "My Projects",
+      "description": "Manage and load your saved BEP calculation projects."
+    },
+    "actions": {
+      "newProject": "New Project",
+      "import": "Import Excel",
+      "importShort": "Import",
+      "export": "Export",
+      "exportShort": "Export",
+      "importTooltip": "Excel Import feature (Coming soon)",
+      "exportTooltip": "Export feature (Coming soon)",
+      "loadToCalculator": "Load to Calculator",
+      "exportData": "Export"
+    },
+    "table": {
+      "projectName": "Project Name",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "locale": "Locale",
+      "action": "Action",
+      "openMenu": "Open menu"
+    },
+    "menu": {
+      "view": "View Details",
+      "rename": "Rename",
+      "delete": "Delete"
+    },
+    "create": {
+      "title": "Create New Project",
+      "description": "Create a new BEP calculation project.",
+      "nameLabel": "Project Name",
+      "namePlaceholder": "e.g., Cafe Startup BEP Analysis",
+      "hint": "💡 After creating a project, you can enter and save data in the calculator.",
+      "cancel": "Cancel",
+      "submit": "Create",
+      "submitting": "Creating..."
+    },
+    "rename": {
+      "title": "Rename Project",
+      "description": "Enter a new name for the project.",
+      "nameLabel": "Project Name",
+      "cancel": "Cancel",
+      "submit": "Rename",
+      "submitting": "Renaming..."
+    },
+    "delete": {
+      "title": "Delete Project",
+      "description": "Are you sure you want to delete this project?",
+      "projectName": "Project Name:",
+      "warning": "Deleted projects cannot be recovered.",
+      "cancel": "Cancel",
+      "submit": "Delete",
+      "submitting": "Deleting..."
+    },
+    "detail": {
+      "title": "Project Details",
+      "description": "Detailed information about your saved BEP calculation project.",
+      "basicInfo": {
+        "title": "Basic Information",
+        "projectName": "Project Name",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "version": "Version",
+        "locale": "Locale"
+      },
+      "inputs": {
+        "title": "Input Values",
+        "price": "Unit Price",
+        "unitCost": "Unit Variable Cost",
+        "fixedCost": "Fixed Cost",
+        "targetProfit": "Target Profit"
+      },
+      "results": {
+        "title": "Calculation Results",
+        "bepQuantity": "BEP Quantity",
+        "bepRevenue": "BEP Revenue",
+        "marginRate": "Contribution Margin Rate",
+        "targetQuantity": "Target Quantity"
+      },
+      "sensitivity": {
+        "title": "Sensitivity Analysis",
+        "dataPoints": "data points"
+      }
+    },
+    "empty": {
+      "title": "No saved projects",
+      "description": "Create your first project to save BEP calculation results."
+    },
+    "loading": "Loading projects...",
+    "error": {
+      "loadFailed": "An error occurred while loading the project list.",
+      "detailLoadFailed": "An error occurred while loading the project."
+    },
+    "toast": {
+      "loginRequired": "Login Required",
+      "loginRequiredDesc": "Please log in to create a project.",
+      "inputError": "Input Error",
+      "nameRequired": "Please enter a project name.",
+      "createSuccess": "Created",
+      "createSuccessDesc": "Project \"{name}\" has been successfully created.",
+      "createFailed": "Creation Failed",
+      "createFailedDesc": "An error occurred while creating the project.",
+      "renameSuccess": "Renamed",
+      "renameSuccessDesc": "Project name has been changed to \"{name}\".",
+      "renameFailed": "Rename Failed",
+      "deleteSuccess": "Deleted",
+      "deleteSuccessDesc": "Project \"{name}\" has been deleted.",
+      "deleteFailed": "Delete Failed",
+      "loadSuccess": "Loaded",
+      "loadSuccessDesc": "Project \"{name}\" data has been loaded to the calculator.",
+      "loadFailed": "Load Failed"
+    },
+    "units": {
+      "won": "KRW",
+      "quantity": "units",
+      "percent": "%"
+    }
+  }
+}
