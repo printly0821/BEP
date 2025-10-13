@@ -6,17 +6,61 @@
  */
 
 /**
+ * 변동비 세부 항목 (선택적)
+ * Excel Import 시 사용되며, 합계는 unitCost와 일치해야 함
+ */
+export type VariableCostDetail = {
+  /** 원재료비 */
+  materials?: number;
+  /** 패키지 비용 */
+  packaging?: number;
+  /** 택배박스 비용 */
+  shippingBox?: number;
+  /** 마켓 수수료 */
+  marketFee?: number;
+  /** 배송 비용 */
+  shippingCost?: number;
+  /** 기타 변동비 */
+  other?: number;
+};
+
+/**
+ * 고정비 세부 항목 (선택적)
+ * Excel Import 시 사용되며, 합계는 fixedCost와 일치해야 함
+ */
+export type FixedCostDetail = {
+  /** 인건비 */
+  labor?: number;
+  /** 식비 */
+  meals?: number;
+  /** 임대료 */
+  rent?: number;
+  /** 공과금 */
+  utilities?: number;
+  /** 사무실 운영비 */
+  office?: number;
+  /** 마케팅비 */
+  marketing?: number;
+  /** 기타 고정비 */
+  other?: number;
+};
+
+/**
  * 계산 입력값 타입
  */
 export type CalculationInputs = {
   /** 판매 단가 */
   price: number;
-  /** 단위당 변동비 */
+  /** 단위당 변동비 (총합) */
   unitCost: number;
-  /** 고정비 */
+  /** 고정비 (총합) */
   fixedCost: number;
   /** 목표 수익 (선택적) */
   targetProfit?: number;
+  /** 변동비 세부 항목 (선택적, Excel Import 시 사용) */
+  variableCostDetail?: VariableCostDetail;
+  /** 고정비 세부 항목 (선택적, Excel Import 시 사용) */
+  fixedCostDetail?: FixedCostDetail;
 };
 
 /**

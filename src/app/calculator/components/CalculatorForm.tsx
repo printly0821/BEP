@@ -74,13 +74,13 @@ export function CalculatorForm({
 
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="variableCost">단위 원가</Label>
+              <Label htmlFor="variableCost">단위 변동비</Label>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>제품 한 개를 만드는 데 드는 변동비용</p>
+                  <p>제품 한 개를 만드는 데 드는 변동비용 (원재료, 패키지, 배송 등)</p>
                 </TooltipContent>
               </Tooltip>
             </div>

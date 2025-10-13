@@ -23,23 +23,51 @@ export async function downloadXlsx(
     const finalFileName = fileName || defaultFileName;
 
     // 1. Inputs 시트 생성
-    const inputsAoA = [
+    const inputsAoA: (string | number)[][] = [
       ["WATERMARK: SHEATCREW FREE"],
       [],
       ["필드", "값"],
       ["판매가", state.inputs.price],
-      ["단위 원가", state.inputs.unitCost],
-      ["월 고정비", state.inputs.fixedCost],
+      ["단위 변동비 (합계)", state.inputs.unitCost],
+      ["월 고정비 (합계)", state.inputs.fixedCost],
       [
         "목표 수익",
         state.inputs.targetProfit !== undefined ? state.inputs.targetProfit : "",
       ],
     ];
+
+    // 변동비 세부 항목이 있으면 추가
+    if (state.inputs.variableCostDetail) {
+      const detail = state.inputs.variableCostDetail;
+      inputsAoA.push([]);
+      inputsAoA.push(["[변동비 세부 항목]", ""]);
+      if (detail.materials !== undefined) inputsAoA.push(["  원재료비", detail.materials]);
+      if (detail.packaging !== undefined) inputsAoA.push(["  패키지", detail.packaging]);
+      if (detail.shippingBox !== undefined) inputsAoA.push(["  택배박스", detail.shippingBox]);
+      if (detail.marketFee !== undefined) inputsAoA.push(["  마켓수수료", detail.marketFee]);
+      if (detail.shippingCost !== undefined) inputsAoA.push(["  배송비", detail.shippingCost]);
+      if (detail.other !== undefined) inputsAoA.push(["  기타", detail.other]);
+    }
+
+    // 고정비 세부 항목이 있으면 추가
+    if (state.inputs.fixedCostDetail) {
+      const detail = state.inputs.fixedCostDetail;
+      inputsAoA.push([]);
+      inputsAoA.push(["[고정비 세부 항목]", ""]);
+      if (detail.labor !== undefined) inputsAoA.push(["  인건비", detail.labor]);
+      if (detail.meals !== undefined) inputsAoA.push(["  식비", detail.meals]);
+      if (detail.rent !== undefined) inputsAoA.push(["  임대료", detail.rent]);
+      if (detail.utilities !== undefined) inputsAoA.push(["  공과금", detail.utilities]);
+      if (detail.office !== undefined) inputsAoA.push(["  사무실운영비", detail.office]);
+      if (detail.marketing !== undefined) inputsAoA.push(["  마케팅비", detail.marketing]);
+      if (detail.other !== undefined) inputsAoA.push(["  기타", detail.other]);
+    }
+
     const inputsSheet = XLSX.utils.aoa_to_sheet(inputsAoA);
 
     // Inputs 시트 스타일링
     if (!inputsSheet["!cols"]) inputsSheet["!cols"] = [];
-    inputsSheet["!cols"][0] = { wch: 15 }; // 첫 번째 열 너비
+    inputsSheet["!cols"][0] = { wch: 20 }; // 첫 번째 열 너비 (세부 항목 고려)
     inputsSheet["!cols"][1] = { wch: 20 }; // 두 번째 열 너비
 
     // 2. Results 시트 생성
@@ -68,7 +96,7 @@ export async function downloadXlsx(
     const sensAoA: (string | number)[][] = [
       ["WATERMARK: SHEATCREW FREE"],
       [],
-      ["판매가", "단위 원가", "손익분기점", "수익"],
+      ["판매가", "단위 변동비", "손익분기점", "수익"],
     ];
 
     // 민감도 데이터가 있는 경우 추가
@@ -134,7 +162,7 @@ export async function downloadXlsx(
  * 가격과 원가의 ±20% 범위에서 각 10개 데이터 포인트를 생성합니다.
  *
  * @param price - 기준 판매가
- * @param unitCost - 기준 단위 원가
+ * @param unitCost - 기준 단위 변동비
  * @param fixedCost - 고정비
  * @param targetProfit - 목표 수익 (선택적)
  * @returns SensitivityPoint[]
