@@ -34,13 +34,13 @@ export function Header() {
             </Link>
             <Link
               href="/projects"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-foreground/75 hover:text-foreground transition-colors"
             >
               프로젝트
             </Link>
             <Link
               href="/pricing"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-foreground/75 hover:text-foreground transition-colors"
             >
               요금제
             </Link>
@@ -54,7 +54,7 @@ export function Header() {
               <span className="text-sm text-foreground hidden md:inline">
                 {user.email}
               </span>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild>
                 <Link href="/dashboard">대시보드</Link>
               </Button>
               <Button variant="outline" size="sm" onClick={handleSignOut}>

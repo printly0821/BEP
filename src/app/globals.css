@@ -345,22 +345,24 @@
     transition: all var(--transition-image);
   }
 
-  /* 비활성 버튼 가독성 개선 - 디자인 시스템 기반 */
+  /* 비활성 버튼 가독성 개선 - 텍스트 진하게 */
   button:disabled,
   button[disabled] {
     background-color: #F3F4F6 !important; /* 확실한 연한 회색 */
-    color: #9CA3AF !important; /* 명확한 회색 텍스트 */
-    border: 1px solid #E5E7EB !important; /* 더 진한 테두리 */
+    color: #6B7280 !important; /* 더 진한 회색 텍스트 (Gray-500) */
+    border: 1px solid #D1D5DB !important; /* 더 진한 테두리 */
     cursor: not-allowed;
     opacity: 1 !important;
+    font-weight: 500 !important; /* 폰트 두께 증가 */
   }
 
   /* 다크모드에서의 비활성 버튼 */
   .dark button:disabled,
   .dark button[disabled] {
     background-color: #374151 !important; /* 다크 회색 */
-    color: #9CA3AF !important; /* 밝은 회색 텍스트 */
+    color: #D1D5DB !important; /* 더 밝은 회색 텍스트 (Gray-300) */
     border: 1px solid #4B5563 !important; /* 다크 테두리 */
+    font-weight: 500 !important;
   }
 
   /* Outline 버튼 비활성 상태 */
@@ -368,13 +370,15 @@
   button[disabled][class*="outline"] {
     background-color: #F9FAFB !important; /* 더 밝은 회색 */
     border: 1.5px solid #D1D5DB !important; /* 더 명확한 테두리 */
-    color: #9CA3AF !important;
+    color: #6B7280 !important; /* 더 진한 회색 */
+    font-weight: 500 !important;
   }
 
   .dark button:disabled[class*="outline"],
   .dark button[disabled][class*="outline"] {
     background-color: #1F2937 !important; /* 다크 배경 */
     border: 1.5px solid #4B5563 !important; /* 다크 테두리 */
-    color: #9CA3AF !important;
+    color: #D1D5DB !important; /* 더 밝은 회색 */
+    font-weight: 500 !important;
   }
 }

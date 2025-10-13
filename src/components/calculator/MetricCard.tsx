@@ -21,10 +21,10 @@ export function MetricCard({ title, value, unit, icon: Icon, description }: Metr
       <CardContent>
         <div className="text-2xl font-bold">
           {typeof value === 'number' ? value.toLocaleString() : value}
-          {unit && <span className="text-lg font-normal text-muted-foreground ml-1">{unit}</span>}
+          {unit && <span className="text-lg font-normal text-foreground/70 ml-1">{unit}</span>}
         </div>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-xs text-foreground/60 mt-1">{description}</p>
         )}
       </CardContent>
     </Card>
