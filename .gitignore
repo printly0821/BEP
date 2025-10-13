@@ -65,3 +65,6 @@ commit-t007.sh
 .etc/
 .ruler/
 commit-t007.sh
+
+# Screenshots and temporary images
+img/
