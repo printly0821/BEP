@@ -30,15 +30,52 @@ export async function generatePDF(
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
+      allowTaint: true,
       logging: false,
       backgroundColor: "#ffffff",
       foreignObjectRendering: false, // OKLCH 파싱 에러 방지
       onclone: (clonedDoc) => {
-        // 클론된 문서에서 모든 CSS 변수 제거 (OKLCH 방지)
+        // 클론된 문서에서 모든 CSS 변수 및 oklch 색상 제거
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
+          // 기본 스타일 강제 적용
           clonedElement.style.backgroundColor = "#ffffff";
           clonedElement.style.color = "#000000";
+
+          // 모든 하위 요소의 oklch 색상을 hex로 변환
+          const allElements = clonedElement.querySelectorAll("*");
+          const clonedWindow = clonedDoc.defaultView || window;
+
+          allElements.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+
+            try {
+              const computedStyle = clonedWindow.getComputedStyle(htmlEl);
+
+              // oklch가 포함된 스타일을 기본 색상으로 대체
+              ["color", "backgroundColor", "borderColor", "fill", "stroke"].forEach(
+                (prop) => {
+                  try {
+                    const value = computedStyle.getPropertyValue(prop);
+                    if (value && value.includes("oklch")) {
+                      // oklch를 기본 색상으로 대체
+                      if (prop === "backgroundColor") {
+                        htmlEl.style.backgroundColor = "#ffffff";
+                      } else if (prop === "color") {
+                        htmlEl.style.color = "#000000";
+                      } else {
+                        htmlEl.style.setProperty(prop, "transparent");
+                      }
+                    }
+                  } catch (e) {
+                    // 개별 속성 처리 오류 무시
+                  }
+                }
+              );
+            } catch (e) {
+              // getComputedStyle 오류 무시
+            }
+          });
         }
       },
     });
