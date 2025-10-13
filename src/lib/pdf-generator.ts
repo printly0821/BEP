@@ -37,44 +37,70 @@ export async function generatePDF(
       windowWidth: element.scrollWidth,
       windowHeight: element.scrollHeight,
       onclone: (clonedDoc) => {
-        // 클론된 문서에서 모든 Tailwind CSS 및 전역 스타일 제거
+        // 클론된 문서에서 모든 CSS 변수 및 외부 스타일 완전 제거
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
-          // 모든 스타일시트 제거
+          // 1. 모든 스타일시트 완전 제거 (oklch 포함)
           const stylesheets = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
           stylesheets.forEach((sheet) => {
-            // Tailwind나 전역 CSS만 제거 (인라인 스타일은 유지)
-            const content = sheet.textContent || "";
-            if (
-              content.includes("oklch") ||
-              content.includes("tailwind") ||
-              sheet instanceof HTMLLinkElement
-            ) {
-              sheet.remove();
-            }
+            sheet.remove();
           });
 
-          // 기본 스타일 강제 적용
+          // 2. head의 모든 스타일 관련 요소 제거
+          const head = clonedDoc.head;
+          if (head) {
+            const styleElements = head.querySelectorAll('style, link[rel="stylesheet"], [class*="tailwind"]');
+            styleElements.forEach((el) => el.remove());
+          }
+
+          // 3. CSS 변수 모두 제거 (oklch 변수 포함)
+          const rootStyle = clonedDoc.documentElement.style;
+          for (let i = rootStyle.length - 1; i >= 0; i--) {
+            const property = rootStyle[i];
+            if (property.startsWith("--")) {
+              rootStyle.removeProperty(property);
+            }
+          }
+
+          // 4. 기본 스타일 강제 적용
           clonedElement.style.backgroundColor = "#ffffff";
           clonedElement.style.color = "#000000";
           clonedElement.style.fontFamily = "'Noto Sans KR', sans-serif";
+          clonedElement.style.padding = "20px";
 
-          // 모든 하위 요소에서 클래스 기반 스타일 제거 (인라인 스타일은 유지)
+          // 5. 모든 하위 요소의 클래스 및 CSS 변수 제거 후 인라인 스타일 적용
           const allElements = clonedElement.querySelectorAll("*");
           allElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
 
-            // 클래스 제거 (Tailwind 클래스 등)
+            // 클래스 제거
             if (htmlEl.className) {
               htmlEl.removeAttribute("class");
             }
 
-            // 인라인 스타일이 없는 요소에 기본 스타일 적용
-            if (!htmlEl.style.backgroundColor) {
+            // 요소의 CSS 변수 제거
+            const elStyle = htmlEl.style;
+            for (let i = elStyle.length - 1; i >= 0; i--) {
+              const property = elStyle[i];
+              if (property.startsWith("--")) {
+                elStyle.removeProperty(property);
+              }
+              // oklch 또는 var() 함수가 포함된 속성값 제거
+              const value = elStyle.getPropertyValue(property);
+              if (value.includes("oklch") || value.includes("var(")) {
+                elStyle.removeProperty(property);
+              }
+            }
+
+            // 기본 안전 스타일 적용
+            if (!htmlEl.style.backgroundColor || htmlEl.style.backgroundColor.includes("oklch") || htmlEl.style.backgroundColor.includes("var(")) {
               htmlEl.style.backgroundColor = "transparent";
             }
-            if (!htmlEl.style.color && htmlEl.textContent) {
-              htmlEl.style.color = "inherit";
+            if (!htmlEl.style.color || htmlEl.style.color.includes("oklch") || htmlEl.style.color.includes("var(")) {
+              htmlEl.style.color = "#000000";
+            }
+            if (!htmlEl.style.borderColor || htmlEl.style.borderColor.includes("oklch") || htmlEl.style.borderColor.includes("var(")) {
+              htmlEl.style.borderColor = "#cccccc";
             }
           });
         }
