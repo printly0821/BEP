@@ -1,0 +1,57 @@
+# 엑셀 Import 데이터 유효성 검증 및 에러 처리
+
+**Task ID:** T-011
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 6/10
+**Urgency:** 8/10
+**Dependencies:** T-010
+
+## Description
+
+# 요구사항
+- 필수 입력값 매핑 누락 감지, 데이터 타입 오류, 빈 값, 중복 행 검출
+- 로케일 숫자 파싱(쉼표, 통화기호) 정규화 후 타입 검증
+- 사용자 친화적 에러/경고 메시지와 수정 안내, 오류 리포트 다운로드 옵션(CSV)
+- 검증 통과 시 계산기에 안전 반영, 실패 시 매핑 단계로 되돌리기
+
+# Implementation details
+- 스키마: zod v3.23.x로 CalculationInputs 유효성 정의 및 정규화
+- 파서: 문자열 숫자 정규화 유틸 구현(, 공백, 통화기호 제거, 음수 허용)
+- 중복: 동일 레코드 또는 동일 키 값 중복 시 경고 처리 정책 정의
+- UI: 에러 테이블, 항목별 하이라이트, 토스트와 인라인 메시지 병행
+- 에러 코드: MISSING_FIELD, TYPE_ERROR, EMPTY_VALUE, DUPLICATE_ROW 등 정의
+
+# Pseudo-code
+```ts
+import { z } from 'zod'
+const num = z.preprocess((v)=>{ if(typeof v==='string'){ const n = Number(v.replace(/[^0-9.-]/g,'')); return isNaN(n) ? v : n } return v }, z.number().finite())
+const schema = z.object({ price: num.positive(), unitCost: num.nonnegative(), fixedCost: num.nonnegative(), targetProfit: z.union([num.nonnegative(), z.undefined()]) })
+export function validateMapped(data:Record<string,unknown>){
+  const issues: { code:string; field?:string; message:string }[] = []
+  const required = ['price','unitCost','fixedCost']
+  for(const f of required){ if(!(f in data)) issues.push({ code:'MISSING_FIELD', field:f, message:`필수 필드 ${f} 누락` }) }
+  const parsed = schema.safeParse(data)
+  if(!parsed.success){ parsed.error.issues.forEach(i=>issues.push({ code:'TYPE_ERROR', field: String(i.path[0]), message:i.message })) }
+  const ok = issues.length===0
+  return { ok, issues, value: ok ? parsed.data : null }
+}
+
+export function toErrorCsv(issues){
+  const header = 'code,field,message
+'
+  return header + issues.map(i=>`${i.code},${i.field||''},${i.message}`).join('
+')
+}
+```
+
+# 테스트 전략
+- 단위: 각 에러 유형별 케이스 생성 및 메시지 검증
+- 국제화: 다양한 숫자 포맷 입력에 대한 정규화 및 파싱 정확성 테스트
+- 통합: 매핑 단계와의 상호작용, 검증 실패 시 되돌리기 흐름 검증
+- E2E: 실제 엑셀 파일 업로드부터 반영 완료까지 성공/실패 시나리오
+
+---
+
+**Created:** 2025-10-09T16:19:10.736Z
+**Updated:** 2025-10-09T16:19:10.736Z

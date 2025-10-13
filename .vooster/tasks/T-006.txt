@@ -1,0 +1,57 @@
+# 프로젝트 불러오기 및 기본 관리(조회, 수정, 삭제) 기능
+
+**Task ID:** T-006
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 7/10
+**Urgency:** 8/10
+**Dependencies:** T-004, T-005, T-003
+
+## Description
+
+# 요구사항
+- 로그인 사용자의 프로젝트 목록 페이지네이션 조회, 정렬(최신 우선)
+- 프로젝트 선택 시 계산기에 입력값과 결과 자동 반영
+- 이름 수정, 삭제 기능 제공, 권한 검사 통과 실패 시 안내
+- 빈 상태 UX, 오류 처리, 로딩 스켈레톤
+
+# Implementation details
+- API: Hono.js로 /api/projects GET(list), GET by id, PATCH(rename), DELETE 구현
+- 데이터 주입: 기존 계산기 상태 스토어에 불러온 CalculationState를 교체, 그래프 리렌더 트리거
+- 캐시: React Query로 목록/상세 캐시, 낙관적 업데이트 적용
+- 삭제 확인 모달, 되돌리기 토스트 제공
+
+# Pseudo-code
+```ts
+// app/api/projects/[id]/route.ts (Hono)
+const app = new Hono()
+app.get(async c=>{ /* get one by id with auth guard */ })
+app.patch(async c=>{ /* rename project */ })
+app.delete(async c=>{ /* delete project */ })
+export const GET = app.fetch; export const PATCH = app.fetch; export const DELETE = app.fetch
+
+// app/api/projects/route.ts (list)
+const app2 = new Hono()
+app2.get(async c=>{ const supabase = getSupabaseServer(); const { data:{ user } } = await supabase.auth.getUser(); if(!user) return c.json({ error:'unauthorized' },401); const url = new URL(c.req.url); const limit = Number(url.searchParams.get('limit')??'20'); const offset = Number(url.searchParams.get('offset')??'0'); const { data, error } = await supabase.from('projects').select('id,name,created_at,updated_at,version').eq('user_id', user.id).order('created_at',{ ascending:false }).range(offset, offset+limit-1); if(error) return c.json({ error:error.message },400); return c.json({ items:data }) })
+export const GET = app2.fetch
+
+// hooks/useLoadProject.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useCalcStore } from '@/stores/calc'
+export function useLoadProject(){
+  const qc = useQueryClient(); const setState = useCalcStore(s=>s.setStateFromProject)
+  return useMutation({ mutationFn: async(id:string)=>{ const res = await fetch(`/api/projects/${id}`); if(!res.ok) throw new Error('load failed'); return res.json() }, onSuccess: (data)=>{ setState(data) } })
+}
+```
+
+# 테스트 전략
+- API 권한: 타 사용자 리소스 접근 403 확인, 정상 사용자 200
+- 목록 페이징 및 정렬 정확성 테스트, 빈 결과 처리
+- 상태 주입 후 계산 결과와 그래프 재계산 일치성 확인
+- 수정/삭제 후 캐시 무효화 동작, 낙관적 UI 되돌리기 검증
+- E2E: 목록에서 선택하여 상세 진입 및 로드, 삭제 확인 플로우
+
+---
+
+**Created:** 2025-10-09T16:19:10.736Z
+**Updated:** 2025-10-09T16:19:10.736Z

@@ -1,0 +1,55 @@
+# 엑셀 Import 유연 매핑 기능(자동 매핑 + 수동 조정 UI)
+
+**Task ID:** T-010
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 8/10
+**Urgency:** 8/10
+**Dependencies:** T-003
+
+## Description
+
+# 요구사항
+- 사용자가 업로드한 .xlsx 파일을 파싱하여 예상 필드와 자동 매핑
+- 자동 매핑 실패나 충돌 시 수동 매핑 UI 제공(드롭다운, 드래그)
+- 단계 흐름: 업로드 -> 자동 매핑 -> 수동 조정 -> 확인 -> 계산기에 반영
+- 매핑 템플릿 로컬 저장 및 재사용(선택)
+- 오류는 다음 단계의 검증 모듈에서 처리(이 작업은 매핑 UI까지)
+
+# Implementation details
+- 파서: SheetJS xlsx v0.20.x로 첫 행 헤더 추출 및 데이터 행 로드
+- 자동 매핑: fuzzy 알고리즘(fuse.js v7.x)로 유사도 계산, 동의어 사전 구성(price, unit price, selling price 등)
+- 기대 필드: price, unitCost, fixedCost, targetProfit 최소 3개 이상 매핑 유도
+- UI: shadcn-ui Table, Select, Badge로 매핑 상태 표시, 단계 진행 컨트롤러 구현
+- 상태 관리: React Hook Form 또는 내부 상태로 보관, 최종 매핑 결과를 다음 검증 단계로 전달
+
+# Pseudo-code
+```ts
+import * as XLSX from 'xlsx'
+import Fuse from 'fuse.js'
+const synonyms: Record<string,string[]> = { price:['price','selling price','sp','amount'], unitCost:['unit cost','cost','uc'], fixedCost:['fixed cost','overhead','fc'], targetProfit:['target profit','goal profit','tp'] }
+function autoMap(headers:string[]){
+  const fuse = new Fuse(headers, { includeScore:true, threshold:0.4 })
+  const mapping: Record<string,string|null> = { price:null, unitCost:null, fixedCost:null, targetProfit:null }
+  Object.keys(mapping).forEach(key=>{
+    const candidates = [key, ...(synonyms[key]||[])]
+    const best = candidates.map(c=>fuse.search(c)[0]).filter(Boolean).sort((a,b)=>a.score-b.score)[0]
+    mapping[key] = best ? best.item : null
+  })
+  return mapping
+}
+
+// onFile
+async function onFile(file:File){ const wb = XLSX.read(await file.arrayBuffer(), { type:'buffer' }); const ws = wb.Sheets[wb.SheetNames[0]]; const json = XLSX.utils.sheet_to_json(ws, { header:1 }) as any[][]; const headers = (json[0]||[]).map(String); const mapping = autoMap(headers); /* show UI to adjust mapping */ }
+```
+
+# 테스트 전략
+- 단위: 자동 매핑 정확도 테스트(동의어, 대소문자, 공백/특수문자 포함 케이스)
+- UI: 수동 매핑 인터랙션, 필수 필드 누락 시 다음 단계 비활성화
+- 성능: 10k 행 파일 업로드 시 헤더 분석 성능 측정
+- 회귀: 다양한 시트 구조(첫 시트가 아닌 경우) 선택 처리
+
+---
+
+**Created:** 2025-10-09T16:19:10.736Z
+**Updated:** 2025-10-09T16:19:10.736Z

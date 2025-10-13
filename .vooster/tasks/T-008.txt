@@ -1,0 +1,56 @@
+# PDF 리포트 다운로드 기능 구현(워터마크 포함)
+
+**Task ID:** T-008
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 7/10
+**Urgency:** 9/10
+**Dependencies:** T-003
+
+## Description
+
+# 요구사항
+- 계산 결과 수치, 그래프, 요약 카드를 브랜드 워터마크 포함 PDF로 내보내기
+- 모바일 및 데스크톱 모두 지원, 페이지 나눔과 해상도 최적화
+- 디자인 가이드 일관성 유지, 파일명 규칙 제공
+
+# Implementation details
+- 클라이언트 사이드 렌더: html2canvas v1.4.x + jsPDF v2.5.x 조합
+- 리포트 전용 컴포넌트 ReportView를 구성하여 동일 렌더를 PDF에 캡처
+- 그래프 캔버스는 toDataURL로 포함, 배경 및 폰트 렌더링 품질을 위해 scale 옵션 상향
+- 워터마크: 전면 반투명 텍스트 레이어를 각 페이지에 반복 삽입
+- 대용량 페이지 분할: 섹션별 캔버스 슬라이스 처리
+- 접근성: 다운로드 진행 상태 피드백, 취소 가능
+
+# Pseudo-code
+```ts
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+export async function downloadPDF(){
+  const el = document.getElementById('report-root')!
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+  const img = canvas.toDataURL('image/png')
+  const pdf = new jsPDF({ orientation:'p', unit:'pt', format:'a4' })
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
+  const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height)
+  const imgW = canvas.width * ratio, imgH = canvas.height * ratio
+  pdf.addImage(img, 'PNG', (pageWidth - imgW)/2, 24, imgW, imgH)
+  // watermark
+  pdf.setGState(new (pdf as any).GState({ opacity: 0.08 }))
+  pdf.setFontSize(64); pdf.setTextColor(50)
+  pdf.text('SHEATCREW FREE', pageWidth/2, pageHeight/2, { align:'center', angle: -30 })
+  pdf.save(`BEP_Report_${new Date().toISOString().slice(0,10)}.pdf`)
+}
+```
+
+# 테스트 전략
+- 시각 회귀: 대표 데이터로 생성한 PDF 스냅샷 비교
+- 모바일 실제 기기 테스트: 메모리 사용량, 페이지 스크롤 길이 대응
+- 정확성: 수치, 차트 이미지 포함 여부, 워터마크 위치 확인
+- 성능: 3초 내 생성 목표 측정, 임계치 초과 시 경고 표시
+
+---
+
+**Created:** 2025-10-09T16:19:10.736Z
+**Updated:** 2025-10-09T16:19:10.736Z

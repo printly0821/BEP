@@ -1,0 +1,79 @@
+# 글로벌 디자인 시스템: 컬러 팔레트 및 타이포그래피 정의
+
+**Task ID:** T-001
+**Status:** DONE
+**Importance:** MUST
+**Complexity:** 8/10
+**Urgency:** 10/10
+**Dependencies:** None
+
+## Description
+
+## 작업 목표
+
+'쉬잇크루 BEP 마진계산기' 프로젝트의 전체적인 시각적 통일성을 위해 `tailwind.config.js`와 `globals.css` 파일에 글로벌 컬러 팔레트와 타이포그래피 시스템을 정의합니다. `shadcn-ui`의 테마 시스템과 호환되도록 CSS 변수를 사용하여 설정해주세요.
+
+## 상세 요구사항
+
+### 1. 컬러 팔레트 (Color Palette)
+
+금융 도구의 신뢰성과 사용자 친화적인 경험을 고려하여 다음 색상 시스템을 CSS 변수로 정의해주세요.
+
+*   **Primary (주요 색상):** 브랜드의 핵심 색상으로, 주요 버튼, 링크, 활성화된 요소에 사용됩니다. 신뢰감을 주는 파란색 계열로 설정합니다.
+    *   `primary`: `#007BFF` (기본)
+    *   `primary-foreground`: `#FFFFFF` (텍스트/아이콘)
+
+*   **Secondary (보조 색상):** 덜 중요한 액션이나 보조적인 정보 표시에 사용됩니다. 차분한 회색 계열로 설정합니다.
+    *   `secondary`: `#F1F5F9` (기본)
+    *   `secondary-foreground`: `#0F172A` (텍스트/아이콘)
+
+*   **Accent (강조 색상):** 사용자의 주의를 끌어야 하는 시뮬레이션 결과, 특별 프로모션 등에 사용됩니다. 생동감 있는 청록색 계열로 설정합니다.
+    *   `accent`: `#10B981` (기본)
+    *   `accent-foreground`: `#FFFFFF` (텍스트/아이콘)
+
+*   **Grayscale (무채색):** 배경, 텍스트, 경계선 등 UI의 기본 구조를 형성합니다.
+    *   `background`: `#FFFFFF` (기본 배경)
+    *   `foreground`: `#020817` (기본 텍스트)
+    *   `card`: `#FFFFFF` (카드 배경)
+    *   `card-foreground`: `#020817` (카드 텍스트)
+    *   `border`: `#E2E8F0` (경계선)
+    *   `input`: `#E2E8F0` (입력 필드 경계선)
+
+*   **상태 색상 (State Colors):**
+    *   `destructive`: `#EF4444` (오류, 삭제)
+    *   `destructive-foreground`: `#FFFFFF` (텍스트/아이콘)
+
+### 2. 타이포그래피 & 폰트 (Typography & Font)
+
+가독성이 높고 숫자 표현에 용이한 Pretendard 폰트를 기본으로 사용합니다. `globals.css` 또는 레이아웃 컴포넌트에 폰트를 적용하고, `tailwind.config.js`의 `fontSize` 유틸리티를 확장하여 의미론적 타이포그래피 시스템을 구축합니다.
+
+*   **기본 폰트:**
+    *   Font Family: `Pretendard Variable`, `Pretendard`, sans-serif
+    *   `@font-face`를 사용하여 웹폰트를 로컬 `public` 폴더에서 로드하도록 설정해주세요.
+
+*   **사이즈 및 스타일:**
+    *   `h1`: 48px, 700 (Bold)
+    *   `h2`: 36px, 700 (Bold)
+    *   `h3`: 24px, 600 (SemiBold)
+    *   `h4`: 20px, 600 (SemiBold)
+    *   `body` (기본 텍스트): 16px, 400 (Regular)
+    *   `caption` (설명 텍스트): 14px, 400 (Regular)
+    *   `button`: 16px, 500 (Medium)
+
+## 구현 파일
+
+*   `tailwind.config.js`: 컬러 팔레트 및 폰트 사이즈 정의
+*   `src/app/globals.css`: 기본 폰트, CSS 변수, 기본 스타일링 정의
+
+MUST Guidelines:
+- only implement what is written in prompt.
+- tidy first.
+
+
+
+  
+
+---
+
+**Created:** 2025-10-08T04:55:38.837Z
+**Updated:** 2025-10-09T15:21:37.700Z

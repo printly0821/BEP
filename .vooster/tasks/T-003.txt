@@ -1,0 +1,84 @@
+# 핵심 로직 구현: 입력 폼과 연동된 실시간 BEP 계산 기능 (Client-side)
+
+**Task ID:** T-003
+**Status:** DONE
+**Importance:** MUST
+**Complexity:** 8/10
+**Urgency:** 8/10
+**Dependencies:** None
+
+## Description
+
+## 작업 목표
+
+`/calculator` 페이지의 입력 폼 (`CalculatorForm`)에 입력된 값을 기반으로 손익분기점(BEP) 및 관련 지표를 실시간으로 계산하는 클라이언트 사이드 로직을 구현합니다. `React`의 `useState`와 `useEffect` 훅을 사용하여 사용자의 입력에 즉각적으로 반응하고, 계산된 결과를 결과 대시보드(`ResultsDashboard`) 컴포넌트에 전달하여 표시합니다.
+
+---
+
+### 1. 사용자 여정 (User Journey)
+
+`사용자: '판매가' 입력 필드에 '10000'을 입력한다` → `시스템: 입력값을 감지하고 BEP 계산 함수를 즉시 실행한다` → `시스템: 계산된 '손익분기점 판매량'을 상태(state)에 업데이트한다` → `사용자: 결과 대시보드 카드에서 업데이트된 숫자를 실시간으로 확인한다`
+
+### 2. 기능 요구사항 (Functional Requirements)
+
+1.  **입력 상태 관리:**
+    *   `판매가(sellingPrice)`, `단위 원가(variableCost)`, `월 고정비(fixedCost)`, `목표 수익(targetProfit)` 4가지 값에 대한 `useState`를 생성합니다.
+    *   각 입력 필드의 `onChange` 이벤트에 연결하여 사용자 입력을 해당 상태에 저장합니다.
+    *   입력값은 모두 숫자로 관리하며, 빈 값은 `0`으로 처리합니다.
+
+2.  **실시간 계산 로직:**
+    *   입력 상태값이 변경될 때마다 (`useEffect` 활용) 다음 공식에 따라 결과를 계산합니다.
+        *   **공헌이익 (Contribution Margin):** `판매가 - 단위 원가`
+        *   **손익분기점 판매량 (BEP Quantity):** `월 고정비 / 공헌이익`
+        *   **목표 달성 판매량 (Target Sales Quantity):** `(월 고정비 + 목표 수익) / 공헌이익`
+        *   **예상 월 매출 (Projected Monthly Revenue):** `목표 달성 판매량 * 판매가`
+        *   **예상 월 이익 (Projected Monthly Profit):** `(예상 월 매출) - (목표 달성 판매량 * 단위 원가) - 월 고정비`
+
+3.  **결과 상태 관리:**
+    *   위에서 계산된 5가지 결과값에 대한 별도의 `useState`를 생성합니다. (`calculationResult`와 같은 객체 형태 권장)
+    *   계산이 완료되면 이 상태를 업데이트하여 UI에 반영합니다.
+
+4.  **예외 처리:**
+    *   `공헌이익`이 `0` 이하일 경우(판매가 ≤ 단위 원가), 나눗셈 오류가 발생하지 않도록 처리해야 합니다.
+    *   이 경우, 결과값을 `0` 또는 '계산 불가'(`Infinity`나 `NaN`이 표시되지 않도록)로 표시하고, 사용자에게 안내 메시지(예: "판매가가 원가보다 커야 합니다.")를 보여줄 수 있도록 준비합니다. (UI 표시는 별도 태스크)
+
+5.  **숫자 포맷팅:**
+    *   계산된 결과값(매출, 이익 등)과 입력 필드에 표시되는 숫자는 세 자리마다 콤마(`,`)를 추가하여 가독성을 높입니다. (`toLocaleString()` 활용)
+
+### 3. 데이터 흐름 (Data Flow)
+
+1.  **Input Component (`<Input />`):**
+    *   사용자가 숫자 입력
+    *   `onChange` 이벤트 발생 → 입력된 값(e.g., `'10,000'`)을 부모 컴포넌트(`CalculatorPage`)로 전달
+
+2.  **Page Component (`/calculator`):**
+    *   `handleInputChange` 함수 실행:
+        *   전달받은 문자열에서 콤마(`,`) 제거 후 숫자로 변환
+        *   `setSellingPrice(10000)`와 같이 해당 상태 업데이트
+    *   `useEffect` 훅 실행 (의존성 배열: `[sellingPrice, variableCost, ...]`):
+        *   내부의 `calculateResults` 함수 호출
+        *   BEP, 목표 판매량 등 계산
+        *   `setCalculationResult({...})`로 결과 상태 업데이트
+
+3.  **Result Display Component (`<ResultsDashboard />`):**
+    *   `calculationResult` 객체를 `props`로 전달받음
+    *   각 `MetricCard`는 `props`로 받은 숫자를 `toLocaleString()`으로 포맷팅하여 화면에 렌더링
+
+## 구현 범위
+
+*   `src/app/calculator/page.tsx` 또는 해당 페이지를 구성하는 부모 컴포넌트 내에서 상태 및 계산 로직을 구현합니다.
+*   상태와 핸들러 함수를 `CalculatorForm`과 `ResultsDashboard` 컴포넌트에 `props`로 전달합니다.
+*   서버나 외부 API 연동은 일절 포함하지 않습니다.
+
+MUST Guidelines:
+- only implement what is written in prompt.
+- tidy first.
+
+
+
+  
+
+---
+
+**Created:** 2025-10-08T04:55:38.837Z
+**Updated:** 2025-10-09T15:21:51.884Z
