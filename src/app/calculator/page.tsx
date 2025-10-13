@@ -13,6 +13,7 @@ import { DebugPanel } from "./components/DebugPanel";
 import { ReportView } from "./components/ReportView";
 import { useToast } from "@/hooks/use-toast";
 import { generatePDF } from "@/lib/pdf-generator";
+import { downloadXlsx, generateSensitivityData } from "@/lib/excel-generator";
 import type { CalculationState } from "@/features/projects/types";
 
 interface CalculationResult {
@@ -39,8 +40,9 @@ export default function CalculatorPage() {
   // 저장 다이얼로그 상태
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
-  // PDF 다운로드 로딩 상태
+  // PDF 및 Excel 다운로드 로딩 상태
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
 
   // 계산 결과 상태
   const [calculationResult, setCalculationResult] = useState<CalculationResult>({
@@ -143,12 +145,15 @@ export default function CalculatorPage() {
     setSimVariableCost(Number(variableCost) || 20000);
   }, [sellingPrice, variableCost]);
 
-  // CalculationState 생성 (저장용)
+  // CalculationState 생성 (저장용 및 Excel 다운로드용)
   const calculationState: CalculationState = useMemo(() => {
     const sp = Number(sellingPrice) || 0;
     const vc = Number(variableCost) || 0;
     const fc = Number(fixedCost) || 0;
     const tp = Number(targetProfit) || 0;
+
+    // 민감도 분석 데이터 생성
+    const sensitivityData = generateSensitivityData(sp, vc, fc, tp > 0 ? tp : undefined);
 
     return {
       version: 'v1',
@@ -164,7 +169,7 @@ export default function CalculatorPage() {
         marginRate: sp > 0 ? calculationResult.contributionMargin / sp : 0,
         targetQuantity: calculationResult.targetQuantity > 0 ? calculationResult.targetQuantity : undefined,
       },
-      sensitivity: [],
+      sensitivity: sensitivityData,
       chartsMeta: {},
     };
   }, [sellingPrice, variableCost, fixedCost, targetProfit, calculationResult]);
@@ -215,6 +220,39 @@ export default function CalculatorPage() {
     }
   };
 
+  // Excel 다운로드 핸들러
+  const handleDownloadExcel = async () => {
+    if (calculationResult.breakEvenQuantity === 0) {
+      toast({
+        title: "다운로드 불가",
+        description: "먼저 계산을 완료해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDownloadingExcel(true);
+
+    try {
+      // Excel 생성 및 다운로드
+      await downloadXlsx(calculationState);
+
+      toast({
+        title: "다운로드 완료",
+        description: "Excel 파일이 성공적으로 다운로드되었습니다.",
+      });
+    } catch (error) {
+      console.error("Excel 다운로드 오류:", error);
+      toast({
+        title: "다운로드 실패",
+        description: "Excel 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -261,7 +299,9 @@ export default function CalculatorPage() {
               <ActionButtons
                 onSave={handleSave}
                 onDownloadPdf={handleDownloadPdf}
+                onDownloadExcel={handleDownloadExcel}
                 isDownloadingPdf={isDownloadingPdf}
+                isDownloadingExcel={isDownloadingExcel}
               />
             </div>
 
