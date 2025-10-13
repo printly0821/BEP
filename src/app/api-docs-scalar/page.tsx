@@ -37,17 +37,13 @@ export default function ApiDocsScalarPage() {
       // Scalar API Reference 렌더링
       import("@scalar/api-reference").then((module) => {
         const container = document.getElementById("scalar-container");
-        if (container && module.default) {
+        if (container && module.createApiReference) {
           // Scalar 렌더링
           container.innerHTML = "";
-          module.default(container, {
-            spec: {
-              content: spec,
-            },
-            configuration: {
-              theme: "default",
-              layout: "modern",
-            },
+          module.createApiReference(container, {
+            content: spec,
+            theme: "default",
+            layout: "modern",
           });
         }
       });

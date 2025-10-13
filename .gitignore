@@ -56,3 +56,12 @@ next-env.d.ts
 /AGENTS.md
 /AGENTS.md.bak
 # END Ruler Generated Files
+
+# Temporary folders and files
+.etc/
+.ruler/
+commit-t007.sh
+.env.test
+.etc/
+.ruler/
+commit-t007.sh

@@ -1,0 +1,44 @@
+feat(calculator): T-008 PDF 다운로드 기능 구현
+
+## 구현 내용
+
+### PDF 생성 엔진
+- html2canvas: HTML을 캔버스로 변환 (scale: 2 고해상도)
+- jsPDF: 캔버스를 A4 PDF로 변환
+- 다중 페이지 자동 분할 지원
+
+### ReportView 컴포넌트
+- BEP 마진 계산 리포트 전용 뷰
+- 입력 정보, 계산 결과, 분석 요약 포함
+- 인라인 스타일로 OKLCH 에러 방지
+- 워터마크 추가 (SHEATCREW FREE)
+
+### PDF 생성 기능
+- pdf-generator.ts: 재사용 가능한 유틸리티
+- A4 크기 (210mm x 297mm)
+- 자동 파일명 생성 (BEP_Report_YYYY-MM-DD.pdf)
+- 에러 처리 및 로딩 상태
+
+### UI 개선
+- ActionButtons: PDF 다운로드 버튼 추가
+- 로딩 상태 표시 (Loader2 아이콘)
+- 성공/실패 토스트 메시지
+
+## 기술 스택
+- html2canvas v1.4.1
+- jsPDF v2.5.2
+- date-fns v4
+
+## 주요 기능
+- 고해상도 PDF 생성 (scale: 2)
+- 긴 컨텐츠 자동 페이지 분할
+- OKLCH 색상 에러 방지 (RGB 변환)
+- 숨겨진 영역에서 PDF 생성
+
+## 관련 파일
+- src/lib/pdf-generator.ts
+- src/app/calculator/page.tsx
+- src/app/calculator/components/ReportView.tsx
+- src/app/calculator/components/ActionButtons.tsx
+
+관련 이슈: T-008

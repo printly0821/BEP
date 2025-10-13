@@ -1,0 +1,75 @@
+feat(api-docs): Swagger UI 및 Scalar API Reference 문서 추가
+
+## 구현 내용
+
+### OpenAPI 3.0 스펙 정의
+- src/lib/swagger.ts: 완전한 API 스펙
+- 모든 엔드포인트 문서화
+- 스키마 정의 (JobOrderData, JobOrderOptions, etc.)
+- Request/Response 예시 포함
+
+### Swagger UI 구현
+- /api-docs: 전통적인 Swagger UI
+- Dynamic import로 SSR 이슈 해결
+- Console.error 필터링으로 경고 억제
+- "Try it out" 기능으로 실시간 테스트
+
+### Scalar API Reference 구현
+- /api-docs-scalar: 현대적인 API 문서
+- React 19 완벽 호환 (경고 없음)
+- 다크 모드 지원
+- 다양한 언어 코드 예시
+- 향상된 검색 기능
+
+### Swagger JSON 엔드포인트
+- GET /api/swagger: OpenAPI 스펙 제공
+- Postman/Insomnia import 가능
+- 자동 생성된 스펙
+
+## 기술 스택
+- swagger-ui-react v5.29.4
+- swagger-jsdoc v6.2.8
+- @scalar/api-reference v1.38.0
+
+## 주요 기능
+
+### Swagger UI
+- 업계 표준 인터페이스
+- 모든 브라우저 지원
+- 익숙한 UX
+- React Strict Mode 경고 필터링
+
+### Scalar API Reference
+- 현대적이고 세련된 디자인
+- React 19 네이티브 지원
+- 다크 모드
+- JavaScript, Python, PHP 등 다양한 코드 예시
+- 빠른 검색 (Cmd/Ctrl + K)
+
+## 비교표
+| 기능 | Swagger UI | Scalar |
+|------|------------|--------|
+| 디자인 | 전통적 | 현대적 ⭐ |
+| React 19 | 경고 필터링 | 완벽 호환 ⭐ |
+| 코드 예시 | cURL만 | 다양한 언어 ⭐ |
+| 다크 모드 | ❌ | ✅ ⭐ |
+
+## 상호 링크
+- 각 페이지에서 다른 버전으로 전환 가능
+- 사용자 선택권 제공
+
+## 관련 파일
+- src/lib/swagger.ts
+- src/app/api/swagger/route.ts
+- src/app/api-docs/*
+- src/app/api-docs-scalar/*
+
+## 문서
+- src/app/api-docs/README.md: Swagger UI 가이드
+- src/app/api-docs-scalar/README.md: Scalar 가이드
+- src/app/test-report/README.md: 업데이트 (비교표 추가)
+
+## 사용 방법
+1. Swagger UI: http://localhost:3002/api-docs
+2. Scalar: http://localhost:3002/api-docs-scalar
+3. OpenAPI JSON: http://localhost:3002/api/swagger
