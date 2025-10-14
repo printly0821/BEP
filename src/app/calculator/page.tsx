@@ -8,13 +8,14 @@ import { ResultsDashboard } from "./components/ResultsDashboard";
 import { SensitivityChart } from "./components/SensitivityChart";
 import { SimulationPanel } from "./components/SimulationPanel";
 import { ActionButtons } from "./components/ActionButtons";
+import { ImportExcelButton } from "./components/ImportExcelButton";
 import { SaveProjectDialog } from "./components/SaveProjectDialog";
 import { DebugPanel } from "./components/DebugPanel";
 import { ReportView } from "./components/ReportView";
 import { useToast } from "@/hooks/use-toast";
 import { generatePDF } from "@/lib/pdf-generator";
 import { downloadXlsx, generateSensitivityData } from "@/lib/excel-generator";
-import type { CalculationState } from "@/features/projects/types";
+import type { CalculationState, CalculationInputs, VariableCostDetail, FixedCostDetail } from "@/features/projects/types";
 
 interface CalculationResult {
   contributionMargin: number;
@@ -32,6 +33,17 @@ export default function CalculatorPage() {
   const [variableCost, setVariableCost] = useState("20000");
   const [fixedCost, setFixedCost] = useState("3000000");
   const [targetProfit, setTargetProfit] = useState("5000000");
+
+  // 세부 항목 상태
+  const [variableCostDetail, setVariableCostDetail] = useState<VariableCostDetail | undefined>(undefined);
+  const [fixedCostDetail, setFixedCostDetail] = useState<FixedCostDetail | undefined>(undefined);
+
+  // Import한 원본 데이터 저장 (Simulator 비교용)
+  const [importedData, setImportedData] = useState<{
+    inputs: CalculationInputs;
+    fileName: string;
+    timestamp: Date;
+  } | null>(null);
 
   // 시뮬레이션 전용 상태
   const [simPrice, setSimPrice] = useState(50000);
@@ -145,6 +157,13 @@ export default function CalculatorPage() {
     setSimVariableCost(Number(variableCost) || 20000);
   }, [sellingPrice, variableCost]);
 
+  // 세부 항목 존재 여부 확인 (시뮬레이터 비활성화 조건)
+  const hasVariableDetail = variableCostDetail &&
+    Object.values(variableCostDetail).some(v => v && v > 0);
+  const hasFixedDetail = fixedCostDetail &&
+    Object.values(fixedCostDetail).some(v => v && v > 0);
+  const simulatorDisabled = hasVariableDetail || hasFixedDetail;
+
   // CalculationState 생성 (저장용 및 Excel 다운로드용)
   const calculationState: CalculationState = useMemo(() => {
     const sp = Number(sellingPrice) || 0;
@@ -162,6 +181,8 @@ export default function CalculatorPage() {
         unitCost: vc,
         fixedCost: fc,
         targetProfit: tp > 0 ? tp : undefined,
+        variableCostDetail,
+        fixedCostDetail,
       },
       results: {
         bepQuantity: calculationResult.breakEvenQuantity,
@@ -172,7 +193,7 @@ export default function CalculatorPage() {
       sensitivity: sensitivityData,
       chartsMeta: {},
     };
-  }, [sellingPrice, variableCost, fixedCost, targetProfit, calculationResult]);
+  }, [sellingPrice, variableCost, fixedCost, targetProfit, variableCostDetail, fixedCostDetail, calculationResult]);
 
   // 저장 핸들러
   const handleSave = () => {
@@ -253,6 +274,48 @@ export default function CalculatorPage() {
     }
   };
 
+  // Excel Import 핸들러
+  const handleImport = (data: CalculationInputs, fileName?: string) => {
+    setSellingPrice(data.price.toString());
+    setVariableCost(data.unitCost.toString());
+    setFixedCost(data.fixedCost.toString());
+    setTargetProfit(data.targetProfit ? data.targetProfit.toString() : "");
+
+    // 세부 항목 Import
+    setVariableCostDetail(data.variableCostDetail);
+    setFixedCostDetail(data.fixedCostDetail);
+
+    // 원본 데이터 저장 (Simulator 비교용)
+    setImportedData({
+      inputs: data,
+      fileName: fileName || "imported_file.xlsx",
+      timestamp: new Date(),
+    });
+
+    toast({
+      title: "가져오기 완료",
+      description: "Excel 데이터가 성공적으로 가져와졌습니다.",
+    });
+  };
+
+  // 원본으로 리셋 핸들러
+  const handleResetToOriginal = () => {
+    if (!importedData) return;
+
+    const data = importedData.inputs;
+    setSellingPrice(data.price.toString());
+    setVariableCost(data.unitCost.toString());
+    setFixedCost(data.fixedCost.toString());
+    setTargetProfit(data.targetProfit ? data.targetProfit.toString() : "");
+    setVariableCostDetail(data.variableCostDetail);
+    setFixedCostDetail(data.fixedCostDetail);
+
+    toast({
+      title: "원본으로 복구",
+      description: "Import한 원본 데이터로 복구되었습니다.",
+    });
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -271,19 +334,35 @@ export default function CalculatorPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 왼쪽 열: 입력 폼, 시뮬레이션, 액션 버튼 */}
             <div className="lg:col-span-1 space-y-6">
+              <ImportExcelButton
+                onImport={handleImport}
+                existingData={{
+                  price: Number(sellingPrice) || 0,
+                  unitCost: Number(variableCost) || 0,
+                  fixedCost: Number(fixedCost) || 0,
+                  targetProfit: Number(targetProfit) || undefined,
+                  variableCostDetail,
+                  fixedCostDetail,
+                }}
+              />
               <CalculatorForm
                 sellingPrice={sellingPrice}
                 variableCost={variableCost}
                 fixedCost={fixedCost}
                 targetProfit={targetProfit}
+                variableCostDetail={variableCostDetail}
+                fixedCostDetail={fixedCostDetail}
                 onSellingPriceChange={setSellingPrice}
                 onVariableCostChange={setVariableCost}
                 onFixedCostChange={setFixedCost}
                 onTargetProfitChange={setTargetProfit}
+                onVariableCostDetailChange={setVariableCostDetail}
+                onFixedCostDetailChange={setFixedCostDetail}
               />
               <SimulationPanel
                 actualSellingPrice={Number(sellingPrice) || 0}
                 actualVariableCost={Number(variableCost) || 0}
+                importedData={importedData}
                 simPrice={simPrice}
                 simVariableCost={simVariableCost}
                 onSimPriceChange={setSimPrice}
@@ -295,6 +374,8 @@ export default function CalculatorPage() {
                 }}
                 onApply={handleApplySimulation}
                 onReset={handleResetSimulation}
+                onResetToOriginal={handleResetToOriginal}
+                disabled={simulatorDisabled}
               />
               <ActionButtons
                 onSave={handleSave}
