@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +23,11 @@ import {
   parseSheatcrewExcel,
   parseBEPExportExcel,
   detectExcelType,
-  validateCalculationInputs,
   convertToCalculationInputs,
   type SheatcrewProductData,
 } from "@/lib/excel-importer";
+import { validateImportData, type ValidationIssue } from "@/lib/excel-validator";
+import { downloadValidationErrors } from "@/lib/error-report";
 import { ImportPreviewDialog } from "./ImportPreviewDialog";
 import type { CalculationInputs } from "@/features/projects/types";
 
@@ -39,6 +48,9 @@ export function ImportExcelButton({ onImport, existingData }: ImportExcelButtonP
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<CalculationInputs | null>(null);
 
+  // 유효성 검증 에러 상태
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -58,17 +70,22 @@ export function ImportExcelButton({ onImport, existingData }: ImportExcelButtonP
       }
 
       if (fileType === "bep-export") {
-        // BEP Export 파일 - 미리보기 표시
-        const data = await parseBEPExportExcel(file);
+        // BEP Export 파일 - 파싱 후 유효성 검증
+        const rawData = await parseBEPExportExcel(file);
 
-        // 유효성 검증
-        const errors = validateCalculationInputs(data);
-        if (errors.length > 0) {
-          throw new Error(`데이터 검증 실패:\n${errors.join("\n")}`);
+        // 유효성 검증 (새로운 validateImportData 사용)
+        const validation = validateImportData(rawData as unknown as Record<string, unknown>);
+
+        if (!validation.ok) {
+          // 검증 실패 - 에러 표시
+          setValidationIssues(validation.issues);
+          setError("데이터 유효성 검증에 실패했습니다. 아래 에러 목록을 확인하세요.");
+          return;
         }
 
-        // 미리보기 다이얼로그 표시
-        setPreviewData(data);
+        // 검증 성공 - 미리보기 다이얼로그 표시
+        setValidationIssues([]); // 에러 초기화
+        setPreviewData(validation.value);
         setShowPreview(true);
       } else {
         // 쉬잇크루 원본 파일 - 제품 선택 다이얼로그 표시
@@ -94,16 +111,22 @@ export function ImportExcelButton({ onImport, existingData }: ImportExcelButtonP
 
   const handleProductSelect = (product: SheatcrewProductData) => {
     try {
-      const data = convertToCalculationInputs(product);
+      const rawData = convertToCalculationInputs(product);
 
-      // 유효성 검증
-      const errors = validateCalculationInputs(data);
-      if (errors.length > 0) {
-        throw new Error(`데이터 검증 실패:\n${errors.join("\n")}`);
+      // 유효성 검증 (새로운 validateImportData 사용)
+      const validation = validateImportData(rawData as unknown as Record<string, unknown>);
+
+      if (!validation.ok) {
+        // 검증 실패 - 에러 표시
+        setValidationIssues(validation.issues);
+        setError("데이터 유효성 검증에 실패했습니다. 아래 에러 목록을 확인하세요.");
+        setIsDialogOpen(false); // 제품 선택 다이얼로그 닫기
+        return;
       }
 
-      // 미리보기 다이얼로그 표시
-      setPreviewData(data);
+      // 검증 성공 - 미리보기 다이얼로그 표시
+      setValidationIssues([]); // 에러 초기화
+      setPreviewData(validation.value);
       setShowPreview(true);
       setIsDialogOpen(false); // 제품 선택 다이얼로그 닫기
     } catch (err) {
@@ -131,6 +154,14 @@ export function ImportExcelButton({ onImport, existingData }: ImportExcelButtonP
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
+  };
+
+  // CSV 에러 리포트 다운로드 핸들러
+  const handleDownloadErrorReport = () => {
+    if (validationIssues.length > 0) {
+      const fileName = `validation-errors-${currentFileName.replace(/\.xlsx?$/, '')}.csv`;
+      downloadValidationErrors(validationIssues, fileName);
+    }
   };
 
   return (
@@ -171,11 +202,52 @@ export function ImportExcelButton({ onImport, existingData }: ImportExcelButtonP
           </Button>
 
           {error && (
-            <div className="mt-4 rounded-md bg-destructive/15 p-4">
-              <div className="flex gap-2">
-                <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-                <p className="text-sm text-destructive whitespace-pre-line">{error}</p>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-md bg-destructive/15 p-4">
+                <div className="flex gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                  <p className="text-sm text-destructive whitespace-pre-line">{error}</p>
+                </div>
               </div>
+
+              {/* 유효성 검증 에러 테이블 */}
+              {validationIssues.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">에러 목록 ({validationIssues.length}개)</h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadErrorReport}
+                      className="h-8"
+                    >
+                      <Download className="mr-2 h-3 w-3" />
+                      CSV 다운로드
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[140px]">에러 코드</TableHead>
+                          <TableHead className="w-[120px]">필드명</TableHead>
+                          <TableHead>메시지</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {validationIssues.map((issue, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-mono text-xs">{issue.code}</TableCell>
+                            <TableCell className="text-sm">{issue.field || '-'}</TableCell>
+                            <TableCell className="text-sm">{issue.message}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

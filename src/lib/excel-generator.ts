@@ -1,6 +1,331 @@
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
-import type { CalculationState } from "@/features/projects/types";
+import type { CalculationState, VariableCostDetail, FixedCostDetail } from "@/features/projects/types";
+
+/**
+ * Summary 시트 생성
+ * 대시보드 형식의 한눈에 보는 요약 페이지
+ */
+function createSummarySheet(state: CalculationState, today: Date): XLSX.WorkSheet {
+  const contributionMargin = state.inputs.price - state.inputs.unitCost;
+  const contributionMarginRate = (state.results.marginRate * 100).toFixed(2);
+  const unitCostRate = ((state.inputs.unitCost / state.inputs.price) * 100).toFixed(1);
+
+  const summaryAoA: (string | number)[][] = [
+    ["쉬잇크루 BEP 계산기 - 계산 결과 요약"],
+    ["생성일: " + format(today, "yyyy-MM-dd HH:mm:ss")],
+    [],
+    ["=== 📊 핵심 지표 ==="],
+    [],
+    ["지표", "값", "단위"],
+    ["판매가", state.inputs.price, "원"],
+    ["공헌이익", contributionMargin, "원"],
+    ["공헌이익률", contributionMarginRate, "%"],
+    ["손익분기점 판매량", state.results.bepQuantity, "개"],
+    ["손익분기점 매출액", state.results.bepRevenue, "원"],
+    [
+      "목표 달성 판매량",
+      state.results.targetQuantity !== undefined ? state.results.targetQuantity : "-",
+      "개"
+    ],
+    [],
+    ["=== 💰 비용 구조 ==="],
+    [],
+    ["항목", "금액", "비율"],
+    ["단위 변동비", state.inputs.unitCost, unitCostRate + "%"],
+    ["월 고정비", state.inputs.fixedCost, "-"],
+    [
+      "목표 수익",
+      state.inputs.targetProfit !== undefined ? state.inputs.targetProfit : "-",
+      "-"
+    ],
+  ];
+
+  const sheet = XLSX.utils.aoa_to_sheet(summaryAoA);
+
+  // 스타일링
+  if (!sheet["!cols"]) sheet["!cols"] = [];
+  sheet["!cols"][0] = { wch: 25 };
+  sheet["!cols"][1] = { wch: 20 };
+  sheet["!cols"][2] = { wch: 15 };
+
+  return sheet;
+}
+
+/**
+ * 개선된 Inputs 시트 생성
+ * 비율, 검증 컬럼 추가
+ */
+function createInputsSheet(state: CalculationState): XLSX.WorkSheet {
+  const inputsAoA: (string | number)[][] = [
+    ["WATERMARK: SHEATCREW FREE"],
+    [],
+    ["=== [기본 정보] ==="],
+    [],
+    ["필드", "값", "단위", "비고"],
+    ["판매가", state.inputs.price, "원", ""],
+    ["단위 변동비 (합계)", state.inputs.unitCost, "원", "세부↓"],
+    ["월 고정비 (합계)", state.inputs.fixedCost, "원", "세부↓"],
+    [
+      "목표 수익",
+      state.inputs.targetProfit !== undefined ? state.inputs.targetProfit : "",
+      "원",
+      ""
+    ],
+  ];
+
+  // 변동비 세부 항목이 있으면 추가
+  if (state.inputs.variableCostDetail) {
+    const detail = state.inputs.variableCostDetail;
+    const items: Array<[string, number | undefined]> = [
+      ["원재료비", detail.materials],
+      ["패키지", detail.packaging],
+      ["택배박스", detail.shippingBox],
+      ["마켓수수료", detail.marketFee],
+      ["배송비", detail.shippingCost],
+      ["기타", detail.other],
+    ];
+
+    // 실제 값이 있는 항목만 필터링
+    const validItems = items.filter(([, value]) => value !== undefined);
+
+    if (validItems.length > 0) {
+      // 세부 항목 합계 계산
+      const detailSum = validItems.reduce((sum, [, value]) => sum + (value || 0), 0);
+
+      inputsAoA.push([]);
+      inputsAoA.push(["=== [변동비 세부 항목] ===", "", "", ""]);
+      inputsAoA.push(["항목", "금액", "비율", "상태"]);
+
+      validItems.forEach(([name, value]) => {
+        const ratio = state.inputs.unitCost > 0
+          ? ((value! / state.inputs.unitCost) * 100).toFixed(1) + "%"
+          : "0%";
+        inputsAoA.push(["  " + name, value!, ratio, ""]);
+      });
+
+      // 합계 및 검증
+      const isValid = detailSum === state.inputs.unitCost;
+      inputsAoA.push(["합계", detailSum, "100.0%", isValid ? "✅" : "❌"]);
+      inputsAoA.push([
+        "합계 검증",
+        state.inputs.unitCost,
+        "",
+        isValid ? "일치" : "불일치"
+      ]);
+    }
+  }
+
+  // 고정비 세부 항목이 있으면 추가
+  if (state.inputs.fixedCostDetail) {
+    const detail = state.inputs.fixedCostDetail;
+    const items: Array<[string, number | undefined]> = [
+      ["인건비", detail.labor],
+      ["식비", detail.meals],
+      ["임대료", detail.rent],
+      ["공과금", detail.utilities],
+      ["사무실운영비", detail.office],
+      ["마케팅비", detail.marketing],
+      ["기타", detail.other],
+    ];
+
+    // 실제 값이 있는 항목만 필터링
+    const validItems = items.filter(([, value]) => value !== undefined);
+
+    if (validItems.length > 0) {
+      // 세부 항목 합계 계산
+      const detailSum = validItems.reduce((sum, [, value]) => sum + (value || 0), 0);
+
+      inputsAoA.push([]);
+      inputsAoA.push(["=== [고정비 세부 항목] ===", "", "", ""]);
+      inputsAoA.push(["항목", "금액", "비율", "상태"]);
+
+      validItems.forEach(([name, value]) => {
+        const ratio = state.inputs.fixedCost > 0
+          ? ((value! / state.inputs.fixedCost) * 100).toFixed(1) + "%"
+          : "0%";
+        inputsAoA.push(["  " + name, value!, ratio, ""]);
+      });
+
+      // 합계 및 검증
+      const isValid = detailSum === state.inputs.fixedCost;
+      inputsAoA.push(["합계", detailSum, "100.0%", isValid ? "✅" : "❌"]);
+      inputsAoA.push([
+        "합계 검증",
+        state.inputs.fixedCost,
+        "",
+        isValid ? "일치" : "불일치"
+      ]);
+    }
+  }
+
+  const sheet = XLSX.utils.aoa_to_sheet(inputsAoA);
+
+  // 스타일링
+  if (!sheet["!cols"]) sheet["!cols"] = [];
+  sheet["!cols"][0] = { wch: 25 };
+  sheet["!cols"][1] = { wch: 20 };
+  sheet["!cols"][2] = { wch: 15 };
+  sheet["!cols"][3] = { wch: 15 };
+
+  return sheet;
+}
+
+/**
+ * Validation 시트 생성
+ * 데이터 무결성 자동 검증
+ */
+function createValidationSheet(state: CalculationState, today: Date): XLSX.WorkSheet {
+  const validationResults: Array<[string, string, string]> = [];
+  let passCount = 0;
+  let totalCount = 0;
+
+  // 기본 검증
+  const checks: Array<[string, boolean, string]> = [
+    ["판매가 > 0", state.inputs.price > 0, "통과"],
+    ["판매가 > 단위 변동비", state.inputs.price > state.inputs.unitCost, "통과"],
+    ["공헌이익 > 0", state.inputs.price - state.inputs.unitCost > 0, "통과"],
+    ["고정비 >= 0", state.inputs.fixedCost >= 0, "통과"],
+    [
+      "목표 수익 >= 0",
+      state.inputs.targetProfit === undefined || state.inputs.targetProfit >= 0,
+      "통과"
+    ],
+  ];
+
+  checks.forEach(([checkName, isValid]) => {
+    totalCount++;
+    if (isValid) passCount++;
+    validationResults.push([
+      checkName,
+      isValid ? "✅" : "❌",
+      isValid ? "통과" : "실패"
+    ]);
+  });
+
+  // 세부 항목 합계 검증
+  const detailChecks: Array<[string, number, number, string]> = [];
+
+  if (state.inputs.variableCostDetail) {
+    const detail = state.inputs.variableCostDetail;
+    const detailSum = Object.values(detail).reduce((sum, val) => sum + (val || 0), 0);
+    const isValid = detailSum === state.inputs.unitCost;
+    detailChecks.push([
+      "변동비",
+      detailSum,
+      state.inputs.unitCost,
+      isValid ? "✅" : "❌"
+    ]);
+    totalCount++;
+    if (isValid) passCount++;
+  }
+
+  if (state.inputs.fixedCostDetail) {
+    const detail = state.inputs.fixedCostDetail;
+    const detailSum = Object.values(detail).reduce((sum, val) => sum + (val || 0), 0);
+    const isValid = detailSum === state.inputs.fixedCost;
+    detailChecks.push([
+      "고정비",
+      detailSum,
+      state.inputs.fixedCost,
+      isValid ? "✅" : "❌"
+    ]);
+    totalCount++;
+    if (isValid) passCount++;
+  }
+
+  const integrityScore = totalCount > 0 ? ((passCount / totalCount) * 100).toFixed(0) : "100";
+  const canImport = passCount === totalCount;
+
+  const validationAoA: (string | number)[][] = [
+    ["데이터 검증 리포트"],
+    ["생성일: " + format(today, "yyyy-MM-dd HH:mm:ss")],
+    [],
+    ["=== ✅ 기본 검증 ==="],
+    [],
+    ["검증 항목", "결과", "메시지"],
+    ...validationResults,
+    [],
+    ["=== ✅ 세부 항목 합계 검증 ==="],
+    [],
+    ["항목", "세부합계", "총합계", "결과"],
+    ...detailChecks,
+    [],
+    ["=== 📊 데이터 무결성 점수 ==="],
+    [],
+    ["총 검증 항목", totalCount + "개"],
+    ["통과", passCount + "개"],
+    ["실패", (totalCount - passCount) + "개"],
+    ["무결성 점수", integrityScore + "% " + (canImport ? "✅" : "❌")],
+    [],
+    [
+      "💡 Import 가능 여부",
+      canImport ? "✅ 이 파일은 다시 Import 가능합니다." : "❌ 검증 실패 항목을 수정하세요."
+    ],
+  ];
+
+  const sheet = XLSX.utils.aoa_to_sheet(validationAoA);
+
+  // 스타일링
+  if (!sheet["!cols"]) sheet["!cols"] = [];
+  sheet["!cols"][0] = { wch: 30 };
+  sheet["!cols"][1] = { wch: 20 };
+  sheet["!cols"][2] = { wch: 20 };
+  sheet["!cols"][3] = { wch: 15 };
+
+  return sheet;
+}
+
+/**
+ * 개선된 Readme 시트 생성
+ */
+function createReadmeSheet(today: Date): XLSX.WorkSheet {
+  const readmeAoA: (string | number)[][] = [
+    ["쉬잇크루 BEP 계산기 - Export 파일 가이드"],
+    [],
+    ["=== 📋 이 파일에 대하여 ==="],
+    ["생성일: " + format(today, "yyyy-MM-dd HH:mm:ss")],
+    ["버전: v1"],
+    ["생성 도구: BEP 계산기 (https://bep.sheatcrew.com)"],
+    [],
+    ["=== 📊 포함된 시트 ==="],
+    ["1. Summary     : 계산 결과 요약 (한눈에 보기)"],
+    ["2. Inputs      : 입력값 및 세부 항목 ⬅ Import 대상"],
+    ["3. Results     : 계산 결과"],
+    ["4. Sensitivity : 민감도 분석"],
+    ["5. Validation  : 데이터 무결성 검증"],
+    ["6. Readme      : 이 안내 페이지"],
+    [],
+    ["=== 🔄 다시 Import 하는 방법 ==="],
+    ["1. BEP 계산기 접속"],
+    ["2. 'Excel 파일 가져오기' 버튼 클릭"],
+    ["3. 이 파일 선택"],
+    ["4. 자동으로 Inputs 시트에서 데이터 로드"],
+    [],
+    ["=== ⚠️ 주의사항 ==="],
+    ["• Inputs 시트의 구조를 변경하지 마세요"],
+    ["• 세부 항목 합계가 총합계와 일치해야 합니다"],
+    ["• Validation 시트에서 검증 결과를 확인하세요"],
+    ["• 비율, 상태 컬럼은 참고용이며 Import 시 무시됩니다"],
+    [],
+    ["=== 💰 무료 버전 안내 ==="],
+    ["• 이 파일은 무료 버전으로 생성되었습니다"],
+    ["• 워터마크가 포함되어 있습니다"],
+    ["• Pro 버전: 워터마크 제거, 고급 분석, PDF 리포트"],
+    [],
+    ["=== 📞 문의 ==="],
+    ["웹사이트: https://bep.sheatcrew.com"],
+    ["이메일: support@sheatcrew.com"],
+  ];
+
+  const sheet = XLSX.utils.aoa_to_sheet(readmeAoA);
+
+  // 스타일링
+  if (!sheet["!cols"]) sheet["!cols"] = [];
+  sheet["!cols"][0] = { wch: 80 };
+
+  return sheet;
+}
 
 /**
  * CalculationState를 Excel 파일(.xlsx)로 변환하여 다운로드합니다.
@@ -22,55 +347,13 @@ export async function downloadXlsx(
     const defaultFileName = `BEP_Export_${format(today, "yyyy-MM-dd")}.xlsx`;
     const finalFileName = fileName || defaultFileName;
 
-    // 1. Inputs 시트 생성
-    const inputsAoA: (string | number)[][] = [
-      ["WATERMARK: SHEATCREW FREE"],
-      [],
-      ["필드", "값"],
-      ["판매가", state.inputs.price],
-      ["단위 변동비 (합계)", state.inputs.unitCost],
-      ["월 고정비 (합계)", state.inputs.fixedCost],
-      [
-        "목표 수익",
-        state.inputs.targetProfit !== undefined ? state.inputs.targetProfit : "",
-      ],
-    ];
+    // 1. Summary 시트 생성
+    const summarySheet = createSummarySheet(state, today);
 
-    // 변동비 세부 항목이 있으면 추가
-    if (state.inputs.variableCostDetail) {
-      const detail = state.inputs.variableCostDetail;
-      inputsAoA.push([]);
-      inputsAoA.push(["[변동비 세부 항목]", ""]);
-      if (detail.materials !== undefined) inputsAoA.push(["  원재료비", detail.materials]);
-      if (detail.packaging !== undefined) inputsAoA.push(["  패키지", detail.packaging]);
-      if (detail.shippingBox !== undefined) inputsAoA.push(["  택배박스", detail.shippingBox]);
-      if (detail.marketFee !== undefined) inputsAoA.push(["  마켓수수료", detail.marketFee]);
-      if (detail.shippingCost !== undefined) inputsAoA.push(["  배송비", detail.shippingCost]);
-      if (detail.other !== undefined) inputsAoA.push(["  기타", detail.other]);
-    }
+    // 2. Inputs 시트 생성 (개선됨)
+    const inputsSheet = createInputsSheet(state);
 
-    // 고정비 세부 항목이 있으면 추가
-    if (state.inputs.fixedCostDetail) {
-      const detail = state.inputs.fixedCostDetail;
-      inputsAoA.push([]);
-      inputsAoA.push(["[고정비 세부 항목]", ""]);
-      if (detail.labor !== undefined) inputsAoA.push(["  인건비", detail.labor]);
-      if (detail.meals !== undefined) inputsAoA.push(["  식비", detail.meals]);
-      if (detail.rent !== undefined) inputsAoA.push(["  임대료", detail.rent]);
-      if (detail.utilities !== undefined) inputsAoA.push(["  공과금", detail.utilities]);
-      if (detail.office !== undefined) inputsAoA.push(["  사무실운영비", detail.office]);
-      if (detail.marketing !== undefined) inputsAoA.push(["  마케팅비", detail.marketing]);
-      if (detail.other !== undefined) inputsAoA.push(["  기타", detail.other]);
-    }
-
-    const inputsSheet = XLSX.utils.aoa_to_sheet(inputsAoA);
-
-    // Inputs 시트 스타일링
-    if (!inputsSheet["!cols"]) inputsSheet["!cols"] = [];
-    inputsSheet["!cols"][0] = { wch: 20 }; // 첫 번째 열 너비 (세부 항목 고려)
-    inputsSheet["!cols"][1] = { wch: 20 }; // 두 번째 열 너비
-
-    // 2. Results 시트 생성
+    // 3. Results 시트 생성 (기존 유지)
     const resultsAoA = [
       ["WATERMARK: SHEATCREW FREE"],
       [],
@@ -89,10 +372,10 @@ export async function downloadXlsx(
 
     // Results 시트 스타일링
     if (!resultsSheet["!cols"]) resultsSheet["!cols"] = [];
-    resultsSheet["!cols"][0] = { wch: 25 }; // 첫 번째 열 너비
-    resultsSheet["!cols"][1] = { wch: 20 }; // 두 번째 열 너비
+    resultsSheet["!cols"][0] = { wch: 25 };
+    resultsSheet["!cols"][1] = { wch: 20 };
 
-    // 3. Sensitivity 시트 생성
+    // 4. Sensitivity 시트 생성 (기존 유지)
     const sensAoA: (string | number)[][] = [
       ["WATERMARK: SHEATCREW FREE"],
       [],
@@ -118,35 +401,18 @@ export async function downloadXlsx(
     sensitivitySheet["!cols"][2] = { wch: 15 };
     sensitivitySheet["!cols"][3] = { wch: 15 };
 
-    // 4. Readme 시트 생성
-    const readmeAoA = [
-      ["쉬잇크루 BEP 계산기"],
-      [],
-      ["이 워크북은 BEP 마진 계산기에서 생성되었습니다."],
-      [],
-      ["📊 포함된 데이터:"],
-      ["  • Inputs: 계산에 사용된 입력값"],
-      ["  • Results: 계산된 결과값"],
-      ["  • Sensitivity: 민감도 분석 데이터"],
-      [],
-      ["⚠️ 무료 버전 안내:"],
-      ["  • 이 파일은 무료 버전으로 생성되었습니다."],
-      ["  • 워터마크가 포함되어 있습니다."],
-      ["  • Pro 버전으로 업그레이드하면 워터마크 없는 고해상도 리포트를 받을 수 있습니다."],
-      [],
-      ["📅 생성일: " + format(today, "yyyy-MM-dd HH:mm:ss")],
-      ["🔗 https://bep-calculator.sheatcrew.com"],
-    ];
-    const readmeSheet = XLSX.utils.aoa_to_sheet(readmeAoA);
+    // 5. Validation 시트 생성
+    const validationSheet = createValidationSheet(state, today);
 
-    // Readme 시트 스타일링
-    if (!readmeSheet["!cols"]) readmeSheet["!cols"] = [];
-    readmeSheet["!cols"][0] = { wch: 80 }; // 넓은 열 너비
+    // 6. Readme 시트 생성 (개선됨)
+    const readmeSheet = createReadmeSheet(today);
 
-    // 워크북에 시트 추가
+    // 워크북에 시트 추가 (순서 중요!)
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
     XLSX.utils.book_append_sheet(wb, inputsSheet, "Inputs");
     XLSX.utils.book_append_sheet(wb, resultsSheet, "Results");
     XLSX.utils.book_append_sheet(wb, sensitivitySheet, "Sensitivity");
+    XLSX.utils.book_append_sheet(wb, validationSheet, "Validation");
     XLSX.utils.book_append_sheet(wb, readmeSheet, "Readme");
 
     // 파일 다운로드
