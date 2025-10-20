@@ -46,6 +46,7 @@ export const saveProject = async (
   };
 
   // Supabase insert 실행
+  // select('id')로 필요한 필드만 반환하여 네트워크 전송량 최소화
   const { data, error } = await client
     .from(PROJECTS_TABLE)
     .insert(payload)

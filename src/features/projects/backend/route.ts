@@ -7,8 +7,10 @@ import {
 import {
   getLogger,
   getSupabase,
+  getUser,
   type AppEnv,
 } from '@/backend/hono/context';
+import { requireAuth } from '@/backend/middleware/auth';
 import {
   SaveProjectBodySchema,
   UpdateProjectBodySchema,
@@ -33,25 +35,10 @@ export const registerProjectRoutes = (app: Hono<AppEnv>) => {
    * POST /api/projects
    * 프로젝트 저장 엔드포인트
    */
-  app.post('/projects', async (c) => {
+  app.post('/projects', requireAuth(), async (c) => {
     const supabase = getSupabase(c);
     const logger = getLogger(c);
-
-    // 사용자 인증 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return respond(
-        c,
-        failure(
-          401,
-          projectErrorCodes.unauthorized,
-          'User is not authenticated.',
-        ),
-      );
-    }
+    const user = getUser(c); // 미들웨어에서 검증된 user 가져오기
 
     // 요청 바디 파싱 및 검증
     let body: unknown;
@@ -102,25 +89,10 @@ export const registerProjectRoutes = (app: Hono<AppEnv>) => {
    * GET /api/projects
    * 프로젝트 목록 조회 엔드포인트
    */
-  app.get('/projects', async (c) => {
+  app.get('/projects', requireAuth(), async (c) => {
     const supabase = getSupabase(c);
     const logger = getLogger(c);
-
-    // 사용자 인증 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return respond(
-        c,
-        failure(
-          401,
-          projectErrorCodes.unauthorized,
-          'User is not authenticated.',
-        ),
-      );
-    }
+    const user = getUser(c); // 미들웨어에서 검증된 user 가져오기
 
     // 프로젝트 목록 조회
     const result = await listProjects(supabase, user.id);
@@ -142,26 +114,11 @@ export const registerProjectRoutes = (app: Hono<AppEnv>) => {
    * GET /api/projects/:id
    * 프로젝트 상세 조회 엔드포인트
    */
-  app.get('/projects/:id', async (c) => {
+  app.get('/projects/:id', requireAuth(), async (c) => {
     const supabase = getSupabase(c);
     const logger = getLogger(c);
+    const user = getUser(c); // 미들웨어에서 검증된 user 가져오기
     const projectId = c.req.param('id');
-
-    // 사용자 인증 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return respond(
-        c,
-        failure(
-          401,
-          projectErrorCodes.unauthorized,
-          'User is not authenticated.',
-        ),
-      );
-    }
 
     // 프로젝트 상세 조회
     const result = await getProjectById(supabase, user.id, projectId);
@@ -183,26 +140,11 @@ export const registerProjectRoutes = (app: Hono<AppEnv>) => {
    * PATCH /api/projects/:id
    * 프로젝트 수정 엔드포인트 (이름 변경)
    */
-  app.patch('/projects/:id', async (c) => {
+  app.patch('/projects/:id', requireAuth(), async (c) => {
     const supabase = getSupabase(c);
     const logger = getLogger(c);
+    const user = getUser(c); // 미들웨어에서 검증된 user 가져오기
     const projectId = c.req.param('id');
-
-    // 사용자 인증 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return respond(
-        c,
-        failure(
-          401,
-          projectErrorCodes.unauthorized,
-          'User is not authenticated.',
-        ),
-      );
-    }
 
     // 요청 바디 파싱 및 검증
     let body: unknown;
@@ -253,26 +195,11 @@ export const registerProjectRoutes = (app: Hono<AppEnv>) => {
    * DELETE /api/projects/:id
    * 프로젝트 삭제 엔드포인트
    */
-  app.delete('/projects/:id', async (c) => {
+  app.delete('/projects/:id', requireAuth(), async (c) => {
     const supabase = getSupabase(c);
     const logger = getLogger(c);
+    const user = getUser(c); // 미들웨어에서 검증된 user 가져오기
     const projectId = c.req.param('id');
-
-    // 사용자 인증 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return respond(
-        c,
-        failure(
-          401,
-          projectErrorCodes.unauthorized,
-          'User is not authenticated.',
-        ),
-      );
-    }
 
     // 프로젝트 삭제
     const result = await deleteProject(supabase, user.id, projectId);
