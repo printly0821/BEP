@@ -394,7 +394,12 @@ export default function CalculatorPage() {
                 expectedRevenue={calculationResult.projectedRevenue}
                 expectedProfit={calculationResult.projectedProfit}
               />
-              <SensitivityChart />
+              <SensitivityChart
+                price={Number(sellingPrice) || 0}
+                unitCost={Number(variableCost) || 0}
+                fixedCost={Number(fixedCost) || 0}
+                targetProfit={Number(targetProfit) || undefined}
+              />
             </div>
           </div>
 
